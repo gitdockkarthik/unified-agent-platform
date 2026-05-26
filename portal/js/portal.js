@@ -108,11 +108,12 @@ async function getHistory(sessionId) {
  * @param {string}   slug       — agent slug
  * @param {string}   message    — user message
  * @param {string}   sessionId  — UUID string
+ * @param {Object}   context    — optional per-agent context (report data, etc.)
  * @param {Function} onChunk    — called with each character as it renders
  * @param {Function} onDone     — called with the full response object when complete
  * @param {Function} onError    — called with an Error on failure
  */
-async function invokeAgent(slug, message, sessionId, onChunk, onDone, onError) {
+async function invokeAgent(slug, message, sessionId, context, onChunk, onDone, onError) {
   let res;
   try {
     res = await fetch(`${BACKEND_URL}/api/invoke/${encodeURIComponent(slug)}`, {
@@ -121,7 +122,7 @@ async function invokeAgent(slug, message, sessionId, onChunk, onDone, onError) {
       body: JSON.stringify({
         session_id: sessionId,
         user_message: message,
-        context: {},
+        context: context || {},
         history: [],   // backend loads history from DB by session_id
       }),
     });

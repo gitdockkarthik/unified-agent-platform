@@ -40,6 +40,11 @@
         <div class="chat-sidebar__session" id="sidebar-session">—</div>
       </div>
 
+      <div class="chat-sidebar__section" id="ctx-section" style="display:none">
+        <div class="chat-sidebar__section-label">Data Context</div>
+        <div id="ctx-info" style="font-size:.78rem;color:var(--text-muted);line-height:1.7"></div>
+      </div>
+
       <div class="chat-sidebar__actions">
         <button id="new-session-btn" class="btn btn--secondary btn--full">↺ New Session</button>
       </div>
@@ -90,6 +95,44 @@
     let sessionId = null;
     let streaming = false;
     let acClass = 'ca-0';
+    let agentContext = {};
+
+    // ── Per-agent context loaders ──────────────────────────────────────────────
+    const _CONTEXT_LOADERS = {
+      'alert-analyser': async () => {
+        const res = await fetch(`${BACKEND_URL}/api/agents/alert-analyser/proxy/reports`, {
+          headers: _authHeaders(),
+        });
+        if (!res.ok) return {};
+        const reports = await res.json();
+        if (!reports.length) return {};
+        const r = reports[0];
+        return {
+          has_data: true,
+          report_id: r.id,
+          total_alerts: r.total_alerts,
+          genuine_count: r.genuine_count,
+          noise_count: r.noise_count,
+          filename: r.filename,
+        };
+      },
+      'cur-analyser': async () => {
+        const res = await fetch(`${BACKEND_URL}/api/agents/cur-analyser/proxy/reports`, {
+          headers: _authHeaders(),
+        });
+        if (!res.ok) return {};
+        const reports = await res.json();
+        if (!reports.length) return {};
+        const r = reports[0];
+        return {
+          has_data: true,
+          report_id: r.id,
+          row_count: r.row_count,
+          total_cost: r.total_cost,
+          filename: r.filename,
+        };
+      },
+    };
 
     // ── DOM refs ───────────────────────────────────────────────────────────────
     const messagesEl   = document.getElementById('messages');
@@ -138,13 +181,42 @@
       sessionId = getOrCreateSession(slug);
       updateSessionDisplay();
 
+      // Load agent-specific data context (e.g. latest report for alert/cur analysers)
+      await loadAgentContext(slug);
+
       // Load history
       await loadHistory();
 
       // Ready
-      headerStatus.textContent = 'Ready';
+      headerStatus.textContent = agentContext.has_data ? 'Ready · report loaded' : 'Ready';
       sendBtn.disabled = false;
       chatInput.focus();
+    }
+
+    async function loadAgentContext(slug) {
+      const loader = _CONTEXT_LOADERS[slug];
+      if (!loader) return;
+      try {
+        agentContext = await loader();
+      } catch (_) {
+        agentContext = {};
+      }
+      if (!agentContext.has_data) return;
+
+      const section = document.getElementById('ctx-section');
+      const info    = document.getElementById('ctx-info');
+      let html = `<div style="color:var(--success);font-weight:600">✓ Report loaded</div>`;
+      html += `<div style="word-break:break-all">${agentContext.filename || ''}</div>`;
+      if (slug === 'alert-analyser') {
+        html += `<div>${agentContext.total_alerts} alerts</div>`;
+        html += `<div style="color:var(--success)">${agentContext.genuine_count} genuine</div>`;
+        html += `<div style="color:var(--danger)">${agentContext.noise_count} noise</div>`;
+      } else if (slug === 'cur-analyser') {
+        html += `<div>${(agentContext.row_count || 0).toLocaleString()} line items</div>`;
+        html += `<div>$${Number(agentContext.total_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>`;
+      }
+      info.innerHTML = html;
+      section.style.display = 'block';
     }
 
     function updateSessionDisplay() {
@@ -228,6 +300,7 @@
         agent.slug,
         text,
         sessionId,
+        agentContext,
         // onChunk
         (char) => {
           if (!replaced) {
@@ -270,13 +343,17 @@
     }
 
     // ── New session ────────────────────────────────────────────────────────────
-    newSessBtn.addEventListener('click', () => {
+    newSessBtn.addEventListener('click', async () => {
       if (streaming) return;
       const slug = new URLSearchParams(location.search).get('agent');
       sessionId = resetSession(slug);
       updateSessionDisplay();
       messagesEl.innerHTML = '';
-      headerStatus.textContent = 'New session started';
+      // Re-fetch context so it reflects any newly generated/uploaded report
+      document.getElementById('ctx-section').style.display = 'none';
+      agentContext = {};
+      await loadAgentContext(slug);
+      headerStatus.textContent = agentContext.has_data ? 'New session · report loaded' : 'New session started';
       showToast('New session started', 'success');
       chatInput.focus();
     });
