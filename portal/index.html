@@ -114,6 +114,10 @@
             { label: 'Dashboard', href: '/agents/alert-analyser/dashboard.html' },
             { label: 'Reports',   href: '/agents/alert-analyser/reports.html'   },
           ],
+          'cur-analyser': [
+            { label: 'Dashboard', href: '/agents/cur-analyser/dashboard.html' },
+            { label: 'Reports',   href: '/agents/cur-analyser/reports.html'   },
+          ],
         };
         const extras = (agentLinks[slug] || []).map(l =>
           `<a href="${l.href}" class="btn btn--ghost btn--sm" onclick="event.stopPropagation()">${l.label}</a>`
