@@ -95,6 +95,8 @@ services:
     environment:
       BACKEND_URL: ${BACKEND_URL:-http://localhost:8000}
       BACKEND_API_KEY: ${BACKEND_API_KEY}
+      PORTAL_USERNAME: ${PORTAL_USERNAME:-}
+      PORTAL_PASSWORD: ${PORTAL_PASSWORD:-}
     depends_on:
       - backend
 

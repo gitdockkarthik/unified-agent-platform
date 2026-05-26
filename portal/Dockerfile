@@ -1,5 +1,7 @@
 FROM nginx:alpine
 
+RUN apk add --no-cache apache2-utils
+
 # Remove default nginx config — our entrypoint writes the final conf at runtime
 RUN rm /etc/nginx/conf.d/default.conf
 
