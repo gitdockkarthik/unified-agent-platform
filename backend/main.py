@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import sys
-import traceback
 from contextlib import asynccontextmanager
 
 from alembic import command
@@ -31,21 +30,35 @@ def _run_migrations() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # ── Step 1: Alembic migrations ───────────────────────────────────────────
     try:
-        logger.info("Startup: beginning migration step")
+        logger.info("Startup [1/2]: running Alembic migrations")
         await asyncio.get_event_loop().run_in_executor(None, _run_migrations)
-        logger.info("Startup: migrations done — application ready")
+        logger.info("Startup [1/2]: migrations complete")
     except Exception:
-        logger.critical("Startup failed:\n%s", traceback.format_exc())
+        logger.exception("Startup [1/2] FAILED: Alembic migration raised an exception")
         sys.exit(1)
 
+    # ── Step 2: verify SQLAlchemy engine can reach the database ─────────────
+    try:
+        logger.info("Startup [2/2]: verifying database connectivity (engine.connect)")
+        async with engine.connect() as conn:
+            logger.info("Startup [2/2]: connection acquired — %r", conn)
+        logger.info("Startup [2/2]: database connectivity OK")
+    except Exception:
+        logger.exception("Startup [2/2] FAILED: SQLAlchemy engine could not connect to the database")
+        sys.exit(1)
+
+    logger.info("Startup complete — application is ready to serve requests")
     yield
 
+    # ── Shutdown ─────────────────────────────────────────────────────────────
     try:
+        logger.info("Shutdown: disposing SQLAlchemy engine")
         await engine.dispose()
-        logger.info("Shutdown: database engine disposed")
+        logger.info("Shutdown: engine disposed cleanly")
     except Exception:
-        logger.error("Shutdown error:\n%s", traceback.format_exc())
+        logger.exception("Shutdown error: engine.dispose() raised an exception")
 
 
 app = FastAPI(
