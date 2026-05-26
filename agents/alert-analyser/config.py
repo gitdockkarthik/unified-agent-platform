@@ -10,9 +10,13 @@ class Settings(BaseSettings):
     model: str = "claude-sonnet-4-6"
 
     # Agent identity
-    agent_id: str
+    agent_id: str = ""
     agent_slug: str = "alert-analyser"
     agent_name: str = "Alert Analyser"
+
+    # Self-registration
+    registry_url: str = ""
+    backend_api_key: str = ""
 
     # Database (used by FileSource for stored uploads — Phase 2)
     database_url: str = ""

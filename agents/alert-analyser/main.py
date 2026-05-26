@@ -1,6 +1,10 @@
 import json
+import logging
+from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import FastAPI, Header
 from pydantic import BaseModel, Field
 
@@ -11,9 +15,13 @@ from tools.noise_detector import NoiseDetectorTool
 from tools.source import FileSource
 from tools.suppression_advisor import SuppressionAdvisorTool
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 # ── Alert cache ───────────────────────────────────────────────────────────────
-# Keyed by session_id. Populated at invoke time from context so all tools can
-# read the alert data without re-loading on every tool call.
 _alert_cache: dict[str, list[dict]] = {}
 
 # ── Agent setup ───────────────────────────────────────────────────────────────
@@ -41,9 +49,68 @@ class InvokeResponse(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+# ── Self-registration ─────────────────────────────────────────────────────────
+
+
+async def _register_self() -> None:
+    if not settings.registry_url or not settings.backend_api_key:
+        logger.info("Self-registration skipped: REGISTRY_URL or BACKEND_API_KEY not set")
+        return
+
+    manifest = json.loads((Path(__file__).parent / "manifest.json").read_text())
+    headers = {"X-API-Key": settings.backend_api_key}
+    base = settings.registry_url.rstrip("/")
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        reg_resp = await client.post(
+            f"{base}/api/registry/agents",
+            json={
+                "name": manifest["name"],
+                "slug": manifest["slug"],
+                "description": manifest.get("description", ""),
+                "version": manifest.get("version", "0.1.0"),
+                "invoke_url": manifest.get("invoke_url"),
+                "tools": manifest.get("tools", []),
+            },
+            headers=headers,
+        )
+
+        if reg_resp.status_code == 201:
+            agent_id = reg_resp.json()["id"]
+            logger.info("Self-registration: registered as %s", agent_id)
+        elif reg_resp.status_code == 409:
+            list_resp = await client.get(f"{base}/api/registry/agents", headers=headers)
+            list_resp.raise_for_status()
+            match = next((a for a in list_resp.json() if a["slug"] == manifest["slug"]), None)
+            if not match:
+                logger.error("Self-registration: 409 conflict but slug not found in agent list")
+                return
+            agent_id = match["id"]
+            logger.info("Self-registration: already registered as %s", agent_id)
+        else:
+            logger.error("Self-registration failed: %s — %s", reg_resp.status_code, reg_resp.text)
+            return
+
+        pub_resp = await client.post(f"{base}/api/registry/agents/{agent_id}/publish", headers=headers)
+        if pub_resp.status_code == 200:
+            logger.info("Self-registration: published successfully")
+        else:
+            logger.error("Self-registration publish failed: %s — %s", pub_resp.status_code, pub_resp.text)
+
+
 # ── App ───────────────────────────────────────────────────────────────────────
 
-app = FastAPI(title=settings.agent_name, version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await _register_self()
+    except Exception:
+        logger.exception("Self-registration raised an unexpected exception (agent will still start)")
+    yield
+
+
+app = FastAPI(title=settings.agent_name, version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -58,7 +125,6 @@ async def invoke(
 ) -> InvokeResponse:
     ctx = body.context
 
-    # Load alert data into cache for this session
     if "raw_data" in ctx:
         source = FileSource(ctx["raw_data"], ctx.get("format", "json"))
         _alert_cache[body.session_id] = await source.load_alerts()
@@ -75,7 +141,6 @@ async def invoke(
         api_key=x_anthropic_key,
     )
 
-    # Extract optional chart block from response text
     chart_data = None
     if "```chart" in response_text:
         try:

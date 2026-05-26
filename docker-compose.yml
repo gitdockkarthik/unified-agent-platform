@@ -59,6 +59,8 @@ services:
       MODEL: ${MODEL:-claude-sonnet-4-6}
       NOISE_THRESHOLD_REPEAT: ${NOISE_THRESHOLD_REPEAT:-3}
       NOISE_THRESHOLD_CLOSE_SECS: ${NOISE_THRESHOLD_CLOSE_SECS:-300}
+      REGISTRY_URL: http://backend:8000
+      BACKEND_API_KEY: ${BACKEND_API_KEY}
     depends_on:
       - backend
 
@@ -76,6 +78,8 @@ services:
       AGENT_SLUG: cur-analyser
       AGENT_NAME: CUR Analyser
       MODEL: ${MODEL:-claude-sonnet-4-6}
+      REGISTRY_URL: http://backend:8000
+      BACKEND_API_KEY: ${BACKEND_API_KEY}
     depends_on:
       - backend
 
