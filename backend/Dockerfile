@@ -12,5 +12,6 @@ COPY . .
 ENV PYTHONPATH=/app
 
 EXPOSE 8000
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
-# Railway deploy Tue May 26 16:20:27 IST 2026
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+CMD ["/entrypoint.sh"]
