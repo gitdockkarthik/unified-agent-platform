@@ -1,16 +1,13 @@
-import asyncio
 import logging
 import sys
 from contextlib import asynccontextmanager
 
-from alembic import command
-from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import models  # noqa: F401 — registers all ORM models with Base metadata
 from core.config import settings
-from core.database import engine
+from core.database import Base, engine
 from orchestrator.router import router as orchestrator_router
 from registry.router import router as registry_router
 
@@ -21,32 +18,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def _run_migrations() -> None:
-    logger.info("Running Alembic migrations…")
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
-    logger.info("Alembic migrations complete.")
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # ── Step 1: Alembic migrations ───────────────────────────────────────────
+    # ── Step 1: create tables from ORM metadata ──────────────────────────────
     try:
-        logger.info("Startup [1/2]: running Alembic migrations")
-        await asyncio.get_event_loop().run_in_executor(None, _run_migrations)
-        logger.info("Startup [1/2]: migrations complete")
+        logger.info("Startup [1/2]: running Base.metadata.create_all")
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Startup [1/2]: schema ready")
     except Exception:
-        logger.exception("Startup [1/2] FAILED: Alembic migration raised an exception")
+        logger.exception("Startup [1/2] FAILED: create_all raised an exception")
         sys.exit(1)
 
-    # ── Step 2: verify SQLAlchemy engine can reach the database ─────────────
+    # ── Step 2: verify connectivity with a live connection ───────────────────
     try:
-        logger.info("Startup [2/2]: verifying database connectivity (engine.connect)")
+        logger.info("Startup [2/2]: verifying database connectivity")
         async with engine.connect() as conn:
             logger.info("Startup [2/2]: connection acquired — %r", conn)
         logger.info("Startup [2/2]: database connectivity OK")
     except Exception:
-        logger.exception("Startup [2/2] FAILED: SQLAlchemy engine could not connect to the database")
+        logger.exception("Startup [2/2] FAILED: engine could not connect to the database")
         sys.exit(1)
 
     logger.info("Startup complete — application is ready to serve requests")
