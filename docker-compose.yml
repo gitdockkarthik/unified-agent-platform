@@ -24,8 +24,8 @@ services:
   # No agent or portal env vars leak into this service.
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - "${BACKEND_PORT:-8000}:8000"
@@ -40,7 +40,6 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
-      - ./shared:/app/shared
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   # ── Agent: Alert Analyser ───────────────────────────────────────────────────

@@ -38,11 +38,13 @@ select this repo → configure the settings below before deploying.
 | Setting | Value |
 |---|---|
 | Service name | `backend` |
-| Root Directory | `/` (repo root — required so Dockerfile can copy `shared/`) |
-| Dockerfile Path | `backend/Dockerfile` |
-| Watch Paths | `backend/**`, `shared/**` |
+| Root Directory | `backend/` |
+| Dockerfile Path | `Dockerfile` |
+| Watch Paths | `**` |
 
-Railway reads `/railway.toml` automatically for this service.
+Railway reads `backend/railway.toml` automatically for this service — but the
+live file is `railway.toml` at the repo root (Railway uses whichever `railway.toml`
+it finds in the configured Root Directory).
 
 ### 3b. alert-analyser
 

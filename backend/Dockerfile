@@ -1,18 +1,13 @@
-# Build context must be the monorepo root so shared/ is accessible.
-# docker-compose sets context: . and dockerfile: backend/Dockerfile
-# Railway: set Root Directory to repo root, Dockerfile path to backend/Dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY backend/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# shared schemas used by backend and agents
-COPY shared/ shared/
-
-# backend source
-COPY backend/ .
+# Build context is backend/ — no shared/ dependency after inlining InvokeRequest/InvokeResponse
+# into orchestrator/schemas.py.
+COPY . .
 
 ENV PYTHONPATH=/app
 

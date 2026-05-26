@@ -1,0 +1,24 @@
+# railway.toml — backend service
+#
+# Railway dashboard settings for this service:
+#   Source:          GitHub repo (this monorepo)
+#   Root Directory:  backend/
+#   Dockerfile Path: Dockerfile   (relative to Root Directory)
+#
+# shared/ is no longer needed at build time — InvokeRequest/InvokeResponse are
+# defined locally in orchestrator/schemas.py.
+#
+# Reference summary of all service configs: infra/railway.toml
+# Step-by-step setup guide:              infra/railway-setup.md
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["**"]
+
+[deploy]
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

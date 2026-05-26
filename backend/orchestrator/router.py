@@ -14,8 +14,12 @@ from core.security import require_api_key
 from models.agent import Agent, AgentStatus
 from models.chat_message import ChatMessage
 from models.chat_session import ChatSession
-from orchestrator.schemas import ChatMessageResponse, SessionHistoryResponse
-from shared.schemas import InvokeRequest, InvokeResponse
+from orchestrator.schemas import (
+    ChatMessageResponse,
+    InvokeRequest,
+    InvokeResponse,
+    SessionHistoryResponse,
+)
 
 router = APIRouter(prefix="/api", tags=["orchestrator"])
 

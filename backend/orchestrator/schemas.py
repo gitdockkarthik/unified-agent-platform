@@ -1,8 +1,27 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
+
+# ── Invoke contract (mirrors shared/schemas.py — kept local so the backend
+#    Dockerfile can build from the backend/ directory without needing shared/) ──
+
+class InvokeRequest(BaseModel):
+    session_id: str
+    user_message: str
+    context: dict[str, Any] = Field(default_factory=dict)
+    history: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class InvokeResponse(BaseModel):
+    session_id: str
+    response: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+# ── Chat history ───────────────────────────────────────────────────────────────
 
 class ChatMessageResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
