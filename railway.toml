@@ -1,0 +1,30 @@
+# railway.toml — repo root
+#
+# Railway reads this file for the BACKEND service, which sets its
+# Root Directory to "/" so it can access shared/ during the Docker build.
+#
+# Every other service (portal, alert-analyser, cur-analyser) has its own
+# railway.toml in its own subdirectory — see those files for their settings.
+#
+# Reference summary of all service configs: infra/railway.toml
+# Step-by-step setup guide:              infra/railway-setup.md
+
+# ── backend ───────────────────────────────────────────────────────────────────
+# Railway dashboard settings for this service:
+#   Source:          GitHub repo (this monorepo)
+#   Root Directory:  /          ← must be repo root; Dockerfile copies shared/
+#   Dockerfile Path: backend/Dockerfile
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "backend/Dockerfile"
+watchPatterns = ["backend/**", "shared/**"]
+
+[deploy]
+# $PORT is injected by Railway at runtime; Dockerfile CMD is overridden here.
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+# Health endpoint is at /api/health (mounted under the /api router prefix).
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

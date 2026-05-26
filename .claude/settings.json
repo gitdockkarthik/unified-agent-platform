@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/gkarthikeyan/ai-projects/unified-ai-portal/backend/agents/cur/**)",
+      "Bash(chmod +x /Users/gkarthikeyan/ai-projects/unified-agent-platform/agents/cur-analyser/test_invoke.sh)",
+      "Bash(make --dry-run dev)"
+    ]
+  }
+}

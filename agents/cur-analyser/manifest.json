@@ -1,0 +1,15 @@
+{
+  "name": "CUR Analyser",
+  "slug": "cur-analyser",
+  "description": "Analyses AWS Cost and Usage Report (CUR) CSV files using DuckDB. Provides cost breakdowns, trend analysis, anomaly detection, and savings recommendations.",
+  "version": "0.1.0",
+  "invoke_url": "http://cur-analyser:8002",
+  "capabilities": ["cost-breakdown", "trend-analysis", "anomaly-detection", "savings-recommendations"],
+  "env": [
+    "ANTHROPIC_API_KEY",
+    "MODEL",
+    "AGENT_ID",
+    "AGENT_SLUG",
+    "DATABASE_URL"
+  ]
+}

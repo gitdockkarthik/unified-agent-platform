@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Unified Agent Platform</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-page">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <a href="/" class="topbar__brand">
+      <div class="topbar__logo">UAP</div>
+      <span class="topbar__name">Unified <span>Agent Platform</span></span>
+    </a>
+    <nav class="topbar__nav">
+      <a href="/" class="topbar__link">Agents</a>
+      <a href="/admin/index.html" class="topbar__link topbar__link--active">Admin</a>
+    </nav>
+    <div class="topbar__right">
+      <a href="/admin/register.html" class="btn btn--primary btn--sm">+ Register Agent</a>
+    </div>
+  </header>
+
+  <div class="admin-content">
+    <h1 class="admin-title">Agent Registry</h1>
+    <p class="admin-subtitle">Manage agent lifecycles — publish drafts, deprecate old versions.</p>
+
+    <!-- Filter tabs -->
+    <div class="filter-tabs">
+      <button class="filter-tab filter-tab--active" data-filter="all">
+        All <span class="filter-tab__count" id="count-all">—</span>
+      </button>
+      <button class="filter-tab" data-filter="draft">
+        Draft <span class="filter-tab__count" id="count-draft">—</span>
+      </button>
+      <button class="filter-tab" data-filter="published">
+        Published <span class="filter-tab__count" id="count-published">—</span>
+      </button>
+      <button class="filter-tab" data-filter="deprecated">
+        Deprecated <span class="filter-tab__count" id="count-deprecated">—</span>
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="agents-table-wrap">
+      <table class="agents-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Slug</th>
+            <th>Status</th>
+            <th>Model</th>
+            <th>Version</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr>
+            <td colspan="6">
+              <div class="agents-table__empty">Loading…</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Toast container injected by portal.js -->
+  <script src="/js/config.js"></script>
+  <script src="/js/portal.js"></script>
+  <script>
+    let allAgents = [];
+    let activeFilter = 'all';
+
+    // ── Fetch & render ─────────────────────────────────────────────────────────
+    async function load() {
+      try {
+        allAgents = await fetchAllAgents();
+        updateCounts();
+        renderTable(activeFilter);
+      } catch (err) {
+        document.getElementById('table-body').innerHTML = `
+          <tr><td colspan="6">
+            <div class="agents-table__empty" style="color:var(--danger)">
+              ${err.message.includes('403') ? 'Access denied — check BACKEND_API_KEY in config.' : err.message}
+            </div>
+          </td></tr>`;
+      }
+    }
+
+    function updateCounts() {
+      document.getElementById('count-all').textContent = allAgents.length;
+      ['draft','published','deprecated'].forEach(s => {
+        document.getElementById(`count-${s}`).textContent =
+          allAgents.filter(a => a.status === s).length;
+      });
+    }
+
+    function renderTable(filter) {
+      const agents = filter === 'all' ? allAgents : allAgents.filter(a => a.status === filter);
+      const tbody = document.getElementById('table-body');
+
+      if (!agents.length) {
+        tbody.innerHTML = `<tr><td colspan="6">
+          <div class="agents-table__empty">No agents${filter !== 'all' ? ` with status "${filter}"` : ''}.</div>
+        </td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = agents.map(agent => {
+        const model = (agent.model || '').replace('claude-', '');
+        const canPublish   = agent.status === 'draft';
+        const canDeprecate = agent.status === 'published';
+        return `
+          <tr>
+            <td class="name-cell">${agent.name}</td>
+            <td class="slug-cell">${agent.slug}</td>
+            <td><span class="badge badge--${agent.status}">${agent.status}</span></td>
+            <td class="model-cell">${model || '—'}</td>
+            <td class="text-muted">${agent.version || '—'}</td>
+            <td class="actions-cell">
+              ${canPublish ? `
+                <button class="btn btn--success btn--sm"
+                  onclick="act('publish','${agent.id}','${agent.name}')">Publish</button>
+              ` : ''}
+              ${canDeprecate ? `
+                <button class="btn btn--danger btn--sm"
+                  onclick="act('deprecate','${agent.id}','${agent.name}')">Deprecate</button>
+              ` : ''}
+              <a href="/chat.html?agent=${encodeURIComponent(agent.slug)}"
+                 class="btn btn--ghost btn--sm"
+                 ${agent.status !== 'published' ? 'style="opacity:.4;pointer-events:none"' : ''}>Chat</a>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    // ── Actions ────────────────────────────────────────────────────────────────
+    async function act(action, agentId, agentName) {
+      const label = action === 'publish' ? 'Publish' : 'Deprecate';
+      if (!confirm(`${label} "${agentName}"?`)) return;
+      try {
+        const fn = action === 'publish' ? publishAgent : deprecateAgent;
+        const updated = await fn(agentId);
+        // Update in-place
+        const idx = allAgents.findIndex(a => a.id === agentId);
+        if (idx !== -1) allAgents[idx] = { ...allAgents[idx], status: updated.status };
+        updateCounts();
+        renderTable(activeFilter);
+        showToast(`"${agentName}" ${action}ed successfully`, 'success');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // ── Filter tabs ────────────────────────────────────────────────────────────
+    document.querySelectorAll('.filter-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('filter-tab--active'));
+        btn.classList.add('filter-tab--active');
+        activeFilter = btn.dataset.filter;
+        renderTable(activeFilter);
+      });
+    });
+
+    load();
+  </script>
+</body>
+</html>

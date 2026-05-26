@@ -1,0 +1,18 @@
+# railway.toml — alert-analyser service
+#
+# Railway dashboard settings for this service:
+#   Source:          GitHub repo (this monorepo)
+#   Root Directory:  agents/alert-analyser/
+#   Dockerfile Path: Dockerfile   (relative to Root Directory)
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["**"]
+
+[deploy]
+# Dockerfile CMD already handles $PORT via ${PORT:-8001}; no override needed.
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
