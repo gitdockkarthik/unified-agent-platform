@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -132,6 +134,15 @@ async def invoke(
         _cur_cache[body.session_id] = await source.load_csv()
     elif "cur_csv" in ctx:
         _cur_cache[body.session_id] = ctx["cur_csv"]
+    elif "cur_data" in ctx:
+        rows: list[dict] = ctx["cur_data"]
+        if rows:
+            fieldnames = list(rows[0].keys())
+            buf = io.StringIO()
+            writer = csv.DictWriter(buf, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
+            _cur_cache[body.session_id] = buf.getvalue()
 
     has_data = bool(_cur_cache.get(body.session_id))
 

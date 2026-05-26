@@ -8,7 +8,7 @@ from datetime import date, timedelta
 
 from fastapi import APIRouter, HTTPException, UploadFile
 
-from report_store import add_report, list_reports
+from report_store import add_report, list_reports, get_report_rows
 from tools.duckdb_engine import get_total_cost
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -102,3 +102,12 @@ async def upload_report(file: UploadFile) -> dict:
 @router.get("")
 async def get_reports() -> list[dict]:
     return list_reports()
+
+
+@router.get("/{report_id}/data")
+async def get_report_data(report_id: int) -> list[dict]:
+    """Return the parsed CSV rows for a specific report."""
+    rows = get_report_rows(report_id)
+    if rows is None:
+        raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
+    return rows
