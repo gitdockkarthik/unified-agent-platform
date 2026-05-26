@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from alembic import command
@@ -12,10 +13,14 @@ from orchestrator.router import router as orchestrator_router
 from registry.router import router as registry_router
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+def _run_migrations() -> None:
     alembic_cfg = Config("alembic.ini")
     command.upgrade(alembic_cfg, "head")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await asyncio.get_event_loop().run_in_executor(None, _run_migrations)
     yield
     await engine.dispose()
 
