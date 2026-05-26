@@ -1,4 +1,5 @@
 import json
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from typing import Any, ClassVar
 
@@ -150,3 +151,92 @@ class NoiseDetectorTool(ToolExecutor):
             },
             default=str,
         )
+
+
+# ── Dashboard stats ───────────────────────────────────────────────────────────
+
+def compute_dashboard_stats(classified: list[dict]) -> dict:
+    """Aggregate a classified alert list into dashboard metrics."""
+    noise = [a for a in classified if a["classification"] == "noise"]
+    genuine = [a for a in classified if a["classification"] == "genuine"]
+    total = len(classified)
+    noise_ratio = round(len(noise) / total * 100, 1) if total else 0
+
+    # MTTR — mean close time for genuine alerts in minutes
+    close_times = [
+        a.get("report", {}).get("closeTime", 0)
+        for a in genuine
+        if a.get("report", {}).get("closeTime", 0) > 0
+    ]
+    mttr_minutes = round(sum(close_times) / len(close_times) / 60, 1) if close_times else 0
+
+    # Daily trend
+    daily: dict[str, dict[str, int]] = defaultdict(lambda: {"genuine": 0, "noise": 0})
+    for a in classified:
+        try:
+            date = datetime.fromisoformat(a["createdAt"].replace("Z", "")).strftime("%Y-%m-%d")
+        except Exception:
+            continue
+        daily[date]["noise" if a["classification"] == "noise" else "genuine"] += 1
+    daily_trend = [{"date": d, **v} for d, v in sorted(daily.items())]
+
+    # Repeat offenders (noisiest aliases by count)
+    alias_noise_counts = Counter(a.get("alias", "") for a in noise)
+    repeat_offenders = [{"alias": a, "count": c} for a, c in alias_noise_counts.most_common(10)]
+
+    # Top noisy sources
+    src_noise = Counter(a.get("source", "unknown") for a in noise)
+    top_noisy_sources = [{"source": s, "count": c} for s, c in src_noise.most_common(10)]
+
+    # Service noise scores (noise % per source)
+    src_total = Counter(a.get("source", "unknown") for a in classified)
+    service_noise_scores = [
+        {"service": s, "score": round((c / src_total[s]) * 100, 1)}
+        for s, c in src_noise.most_common()
+    ]
+
+    # Suppression recommendations (aliases firing ≥3 times as noise)
+    suppression_recommendations = [r for r in repeat_offenders if r["count"] >= 3]
+
+    # Team breakdown
+    team_buckets: dict[str, dict[str, int]] = defaultdict(lambda: {"genuine": 0, "noise": 0})
+    for a in classified:
+        teams = a.get("teams", ["Unknown"])
+        team = teams[0] if teams else "Unknown"
+        team_buckets[team]["noise" if a["classification"] == "noise" else "genuine"] += 1
+    team_breakdown = sorted(
+        [{"team": t, **v} for t, v in team_buckets.items()],
+        key=lambda x: x["genuine"] + x["noise"],
+        reverse=True,
+    )[:10]
+
+    # Hourly distribution
+    hourly: dict[int, int] = defaultdict(int)
+    for a in classified:
+        try:
+            h = datetime.fromisoformat(a["createdAt"].replace("Z", "")).hour
+        except Exception:
+            continue
+        hourly[h] += 1
+    hourly_distribution = [{"hour": h, "count": hourly.get(h, 0)} for h in range(24)]
+
+    # Unresolved and high-severity genuine
+    unresolved_genuine = [a for a in genuine if a.get("status", "").lower() in ("open", "")][:20]
+    high_severity_genuine = [a for a in genuine if a.get("priority", "") in ("P1", "P2")][:10]
+
+    return {
+        "total": total,
+        "noise_count": len(noise),
+        "genuine_count": len(genuine),
+        "noise_ratio": noise_ratio,
+        "mttr_minutes": mttr_minutes,
+        "daily_trend": daily_trend,
+        "repeat_offenders": repeat_offenders,
+        "top_noisy_sources": top_noisy_sources,
+        "service_noise_scores": service_noise_scores,
+        "suppression_recommendations": suppression_recommendations,
+        "unresolved_genuine": unresolved_genuine,
+        "high_severity_genuine": high_severity_genuine,
+        "team_breakdown": team_breakdown,
+        "hourly_distribution": hourly_distribution,
+    }

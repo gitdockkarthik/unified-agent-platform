@@ -4,7 +4,7 @@ from typing import Any
 
 import anthropic
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -269,3 +269,46 @@ async def get_session_history(session_id: str, db: AsyncSession = Depends(get_db
 @router.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@router.api_route(
+    "/agents/{slug}/proxy/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE"],
+    dependencies=[Depends(require_api_key)],
+)
+async def proxy_agent_endpoint(
+    slug: str,
+    path: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Forward GET/POST requests to an agent's non-invoke endpoints (dashboard, reports, etc.)."""
+    result = await db.execute(select(Agent).where(Agent.slug == slug))
+    agent = result.scalar_one_or_none()
+    if not agent or not agent.invoke_url:
+        raise HTTPException(status_code=404, detail=f"Agent '{slug}' not found or has no invoke URL")
+
+    url = f"{agent.invoke_url.rstrip('/')}/{path}"
+    body = await request.body()
+    fwd_headers = {
+        k: v for k, v in request.headers.items()
+        if k.lower() not in ("host", "content-length", "transfer-encoding", "x-api-key")
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            resp = await client.request(
+                method=request.method,
+                url=url,
+                content=body or None,
+                headers=fwd_headers,
+                params=dict(request.query_params),
+            )
+        except httpx.RequestError as exc:
+            raise HTTPException(status_code=502, detail=f"Could not reach agent '{slug}': {exc}")
+
+    return Response(
+        content=resp.content,
+        status_code=resp.status_code,
+        media_type=resp.headers.get("content-type", "application/json"),
+    )

@@ -106,8 +106,21 @@
         const ac = agentAccentClass(agent.slug);
         const initial = (agent.slug || 'A')[0].toUpperCase();
         const model = agent.model ? agent.model.replace('claude-', '') : '';
+        const slug = agent.slug;
+
+        // Extra quick-links for agents that expose dashboard/reports pages
+        const agentLinks = {
+          'alert-analyser': [
+            { label: 'Dashboard', href: '/agents/alert-analyser/dashboard.html' },
+            { label: 'Reports',   href: '/agents/alert-analyser/reports.html'   },
+          ],
+        };
+        const extras = (agentLinks[slug] || []).map(l =>
+          `<a href="${l.href}" class="btn btn--ghost btn--sm" onclick="event.stopPropagation()">${l.label}</a>`
+        ).join('');
+
         return `
-          <div class="agent-card ${ac}" onclick="window.location='/chat.html?agent=${encodeURIComponent(agent.slug)}'" style="cursor:pointer">
+          <div class="agent-card ${ac}" onclick="window.location='/chat.html?agent=${encodeURIComponent(slug)}'" style="cursor:pointer">
             <div class="agent-card__accent"></div>
             <div class="agent-card__body">
               <div class="agent-card__icon">${initial}</div>
@@ -121,9 +134,12 @@
                 <span class="badge badge--published">published</span>
                 ${model ? `<span class="agent-card__model">${model}</span>` : ''}
               </div>
-              <a href="/chat.html?agent=${encodeURIComponent(agent.slug)}"
-                 class="btn btn--primary btn--sm"
-                 onclick="event.stopPropagation()">Chat →</a>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                ${extras}
+                <a href="/chat.html?agent=${encodeURIComponent(slug)}"
+                   class="btn btn--primary btn--sm"
+                   onclick="event.stopPropagation()">Chat →</a>
+              </div>
             </div>
           </div>`;
       }).join('');
