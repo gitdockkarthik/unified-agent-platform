@@ -114,6 +114,15 @@ async function getHistory(sessionId) {
  * @param {Function} onError    — called with an Error on failure
  */
 async function invokeAgent(slug, message, sessionId, context, onChunk, onDone, onError) {
+  // Guard: if a caller passes callbacks without the context arg the names shift by one.
+  // Fail fast here instead of getting a cryptic "onChunk is not a function" inside tick().
+  if (typeof onChunk !== 'function' || typeof onDone !== 'function' || typeof onError !== 'function') {
+    const types = { context: typeof context, onChunk: typeof onChunk, onDone: typeof onDone, onError: typeof onError };
+    console.error('[invokeAgent] wrong call signature — expected (slug, message, sessionId, context, onChunk, onDone, onError). Received types:', types);
+    throw new TypeError('[invokeAgent] onChunk, onDone and onError must all be functions. Did you forget the context argument?');
+  }
+  console.log('[invokeAgent] called — slug:', slug, 'context keys:', Object.keys(context || {}));
+
   let res;
   try {
     res = await fetch(`${BACKEND_URL}/api/invoke/${encodeURIComponent(slug)}`, {
