@@ -1,18 +1,17 @@
 from fastapi import APIRouter
 
-from report_store import get_latest_classified, get_latest_meta
-from tools.noise_detector import compute_dashboard_stats
+from report_store import get_latest_stats, get_latest_meta
 
 router = APIRouter(tags=["dashboard"])
 
 
 @router.get("/dashboard")
 async def get_dashboard() -> dict:
-    """Return computed stats for the most recently uploaded/generated report."""
-    classified = get_latest_classified()
-    if classified is None:
+    """Return precomputed stats for the most recently uploaded/generated report."""
+    stats = get_latest_stats()
+    if stats is None:
         return {"empty": True}
     return {
-        "stats": compute_dashboard_stats(classified),
+        "stats": stats,
         "report": get_latest_meta(),
     }

@@ -107,6 +107,16 @@
         const reports = await res.json();
         if (!reports.length) return {};
         const r = reports[0];
+
+        let alerts = [];
+        try {
+          const dataRes = await fetch(
+            `${BACKEND_URL}/api/agents/alert-analyser/proxy/reports/${r.id}/data`,
+            { headers: _authHeaders() }
+          );
+          if (dataRes.ok) alerts = await dataRes.json();
+        } catch (_) { /* no alerts data — agent will still work without it */ }
+
         return {
           has_data: true,
           report_id: r.id,
@@ -114,6 +124,7 @@
           genuine_count: r.genuine_count,
           noise_count: r.noise_count,
           filename: r.filename,
+          alerts,
         };
       },
       'cur-analyser': async () => {
@@ -314,13 +325,15 @@
         },
         // onDone
         (data) => {
+          console.log('[chat] onDone — rawText length:', rawText.length, 'data:', data);
           // Replace raw text with rendered markdown
           loadingEl.classList.remove('streaming');
           bubble.innerHTML = renderMarkdown(rawText);
-          if (data.tokens_used) {
+          const tokens = data.metadata?.tokens_used;
+          if (tokens) {
             const meta = document.createElement('div');
             meta.className = 'msg__tokens';
-            meta.textContent = `${data.tokens_used} tokens`;
+            meta.textContent = `${tokens} tokens`;
             loadingEl.appendChild(meta);
           }
           streaming = false;

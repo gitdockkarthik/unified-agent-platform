@@ -131,6 +131,8 @@ async function invokeAgent(slug, message, sessionId, context, onChunk, onDone, o
     return;
   }
 
+  console.log('[invoke] response status:', res.status, res.headers.get('content-type'));
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({ detail: res.statusText }));
     onError(new Error(body.detail || `HTTP ${res.status}`));
@@ -153,12 +155,25 @@ async function invokeAgent(slug, message, sessionId, context, onChunk, onDone, o
     return;
   }
 
+  console.log('[invoke] raw body (' + raw.length + ' chars):', raw.slice(0, 500));
+
   let data;
   try { data = JSON.parse(raw); }
-  catch (err) { onError(new Error('Invalid response from server')); return; }
+  catch (err) {
+    console.error('[invoke] JSON.parse failed:', err.message, '— raw was:', raw.slice(0, 200));
+    onError(new Error('Invalid response from server'));
+    return;
+  }
+
+  console.log('[invoke] parsed data keys:', Object.keys(data));
+  console.log('[invoke] data.response type:', typeof data.response, '— length:', (data.response || '').length);
+  console.log('[invoke] data.metadata:', data.metadata);
 
   // Stream the text to the UI character-by-character
   const text = data.response || '';
+  if (!text) {
+    console.warn('[invoke] data.response is empty — nothing to render. Full data:', data);
+  }
   let i = 0;
   const CHARS_PER_FRAME = 4;
   function tick() {
