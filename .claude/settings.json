@@ -5,7 +5,8 @@
       "Bash(chmod +x /Users/gkarthikeyan/ai-projects/unified-agent-platform/agents/cur-analyser/test_invoke.sh)",
       "Bash(make --dry-run dev)",
       "Read(//Users/gkarthikeyan/ai-projects/unified-ai-portal/frontend/agents/alerts/**)",
-      "Read(//Users/gkarthikeyan/ai-projects/unified-ai-portal/frontend/agents/cur/**)"
+      "Read(//Users/gkarthikeyan/ai-projects/unified-ai-portal/frontend/agents/cur/**)",
+      "Bash(awk '/invokeAgent\\\\\\(/{found=1} found{print NR\": \"$0; if\\(/\\\\\\);$/\\){exit}}' /Users/gkarthikeyan/ai-projects/unified-agent-platform/portal/chat.html)"
     ]
   }
 }

@@ -100,22 +100,32 @@
     // ── Per-agent context loaders ──────────────────────────────────────────────
     const _CONTEXT_LOADERS = {
       'alert-analyser': async () => {
-        const res = await fetch(`${BACKEND_URL}/api/agents/alert-analyser/proxy/reports`, {
-          headers: _authHeaders(),
-        });
+        const listUrl = `${BACKEND_URL}/api/agents/alert-analyser/proxy/reports`;
+        console.log('[ctx:alert-analyser] GET', listUrl);
+        const res = await fetch(listUrl, { headers: _authHeaders() });
+        console.log('[ctx:alert-analyser] list status:', res.status);
         if (!res.ok) return {};
         const reports = await res.json();
+        console.log('[ctx:alert-analyser] reports count:', reports.length);
         if (!reports.length) return {};
         const r = reports[0];
 
         let alerts = [];
+        const dataUrl = `${BACKEND_URL}/api/agents/alert-analyser/proxy/reports/${r.id}/data`;
+        console.log('[ctx:alert-analyser] GET', dataUrl);
         try {
-          const dataRes = await fetch(
-            `${BACKEND_URL}/api/agents/alert-analyser/proxy/reports/${r.id}/data`,
-            { headers: _authHeaders() }
-          );
-          if (dataRes.ok) alerts = await dataRes.json();
-        } catch (_) { /* no alerts data — agent will still work without it */ }
+          const dataRes = await fetch(dataUrl, { headers: _authHeaders() });
+          console.log('[ctx:alert-analyser] data status:', dataRes.status);
+          if (dataRes.ok) {
+            alerts = await dataRes.json();
+            console.log('[ctx:alert-analyser] loaded', alerts.length, 'alerts');
+          } else {
+            const errBody = await dataRes.json().catch(() => ({ detail: dataRes.statusText }));
+            console.warn('[ctx:alert-analyser] data fetch failed:', dataRes.status, errBody);
+          }
+        } catch (e) {
+          console.warn('[ctx:alert-analyser] data fetch threw:', e.message);
+        }
 
         return {
           has_data: true,
@@ -307,12 +317,16 @@
       let rawText = '';
       let replaced = false;
 
+      console.log('[send] invokeAgent args — slug:', agent.slug, 'sessionId:', sessionId,
+        'context keys:', Object.keys(agentContext), 'has_data:', agentContext.has_data,
+        'alerts count:', agentContext.alerts?.length ?? 'n/a');
+
       invokeAgent(
-        agent.slug,
-        text,
-        sessionId,
-        agentContext,
-        // onChunk
+        agent.slug,     // 1: slug
+        text,           // 2: message
+        sessionId,      // 3: sessionId
+        agentContext,   // 4: context  ← must be before callbacks
+        // onChunk      // 5:
         (char) => {
           if (!replaced) {
             bubble.textContent = '';
