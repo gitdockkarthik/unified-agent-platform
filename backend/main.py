@@ -1,20 +1,21 @@
 from contextlib import asynccontextmanager
 
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import models  # noqa: F401 — registers all ORM models with Base metadata
 from core.config import settings
-from core.database import Base, engine
+from core.database import engine
 from orchestrator.router import router as orchestrator_router
 from registry.router import router as registry_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # create_all is a dev convenience fallback; production uses `make migrate`
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
     yield
     await engine.dispose()
 
