@@ -133,7 +133,7 @@
         document.getElementById('table-body').innerHTML = `
           <tr><td colspan="6">
             <div class="agents-table__empty" style="color:var(--danger)">
-              ${err.message.includes('403') ? 'Access denied — check BACKEND_API_KEY in config.' : err.message}
+              ${err.message.includes('403') ? 'Access denied — platform key may not be set yet.' : err.message}
             </div>
           </td></tr>`;
       }
@@ -230,7 +230,7 @@
     async function loadPlatformStatus() {
       try {
         const r = await fetch(`${BACKEND_URL}/api/platform/status`, {
-          headers: { 'X-API-Key': window.__CONFIG__?.API_KEY ?? '' }
+          headers: _authHeaders()
         });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const d = await r.json();

@@ -99,7 +99,7 @@
 
     async function loadStatus() {
       const backendUrl = (window.__CONFIG__?.BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
-      const apiKey     = window.__CONFIG__?.API_KEY ?? '';
+      const apiKey     = _apiKey;
       try {
         // Get agent metadata from registry
         const agent = await fetchAgent(SLUG);

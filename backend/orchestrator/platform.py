@@ -25,6 +25,12 @@ _VERSION = "0.2.0"
 _DEFAULT_MODEL = "claude-sonnet-4-6"
 
 
+@router.get("/bootstrap")
+async def bootstrap() -> dict:
+    """Public endpoint — no auth required. Returns the backend API key for portal self-configuration."""
+    return {"api_key": get_backend_api_key() or ""}
+
+
 @router.get("/status")
 async def platform_status(db: AsyncSession = Depends(get_db)) -> dict:
     """Public endpoint — no auth required (used by setup redirect logic)."""

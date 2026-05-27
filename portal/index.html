@@ -74,7 +74,7 @@
     async function load() {
       try {
         const r = await fetch(`${BACKEND_URL}/api/platform/status`, {
-          headers: { 'X-API-Key': window.__CONFIG__?.API_KEY ?? '' },
+          headers: _authHeaders(),
         });
         if (r.ok) {
           const d = await r.json();

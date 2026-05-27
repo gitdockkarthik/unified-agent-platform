@@ -134,9 +134,18 @@
 
   <script>
     const BACKEND_URL = (window.__CONFIG__?.BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
+    let _apiKey = '';
     let step = 1;
     let keyTested = false;
     let anthropicKey = '';
+
+    // Fetch API key from backend for any authenticated calls during setup.
+    async function bootstrapApiKey() {
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/platform/bootstrap`);
+        if (r.ok) { const d = await r.json(); _apiKey = d.api_key || ''; }
+      } catch (_) {}
+    }
 
     // On load: if already configured, skip wizard.
     async function checkAlreadyConfigured() {
@@ -284,6 +293,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      bootstrapApiKey();
       checkAlreadyConfigured();
       document.getElementById('apiKey').addEventListener('keydown', e => {
         if (e.key === 'Enter') testKey();

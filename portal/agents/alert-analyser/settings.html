@@ -156,7 +156,7 @@
     const SLUG  = 'alert-analyser';
     const PROXY = `${BACKEND_URL}/api/agents/${SLUG}/proxy`;
 
-    const authHeaders = () => ({ 'X-API-Key': window.__CONFIG__?.API_KEY ?? '' });
+    const authHeaders = () => _authHeaders();
 
     // ── radio highlight ──────────────────────────────────────────────────────
     document.querySelectorAll('input[name=source_type]').forEach(radio => {

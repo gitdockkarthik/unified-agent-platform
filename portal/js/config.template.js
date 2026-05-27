@@ -2,5 +2,4 @@
 // Source: portal/js/config.template.js → envsubst → /usr/share/nginx/html/js/config.js
 window.__CONFIG__ = {
   BACKEND_URL: '${BACKEND_URL}',
-  API_KEY:     '${BACKEND_API_KEY}',
 };

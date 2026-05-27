@@ -1,7 +1,8 @@
 // ── Runtime config ─────────────────────────────────────────────────────────────
-// Injected by docker-entrypoint.sh from env vars; falls back to localhost for dev.
+// BACKEND_URL injected by docker-entrypoint.sh; falls back to localhost for dev.
+// API key is bootstrapped from the backend at load time — not from env vars.
 const BACKEND_URL = (window.__CONFIG__?.BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
-const API_KEY     = window.__CONFIG__?.API_KEY || '';
+let _apiKey = '';
 
 // ── Agent accent colours ────────────────────────────────────────────────────────
 const ACCENT_CLASSES = ['ca-0','ca-1','ca-2','ca-3','ca-4','ca-5','ca-6','ca-7'];
@@ -45,8 +46,18 @@ async function _json(res) {
 }
 
 function _authHeaders() {
-  return API_KEY ? { 'X-API-Key': API_KEY } : {};
+  return _apiKey ? { 'X-API-Key': _apiKey } : {};
 }
+
+async function initPortal() {
+  try {
+    const data = await _json(await fetch(`${BACKEND_URL}/api/platform/bootstrap`));
+    _apiKey = data.api_key || '';
+  } catch (_) { /* backend unreachable — proceed without key */ }
+}
+
+// Auto-bootstrap: fetch API key from backend on script load.
+initPortal();
 
 // ── Public API ──────────────────────────────────────────────────────────────────
 
