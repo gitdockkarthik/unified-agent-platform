@@ -63,7 +63,7 @@
     <img src="/assets/agentsiq-logo.svg" alt="AgentsIQ">
   </div>
 
-  <div class="wizard">
+  <div class="wizard" style="visibility:hidden">
     <!-- Step indicator -->
     <div class="steps">
       <div class="step active" id="s1">
@@ -130,6 +130,23 @@
     const BACKEND_URL = (window.__CONFIG__?.BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
     let step = 1;
     let keyTested = false;
+
+    // On load: if the platform is already fully configured, skip the wizard.
+    async function checkAlreadyConfigured() {
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/platform/status`, {
+          headers: { 'X-API-Key': window.__CONFIG__?.API_KEY ?? '' },
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d.anthropic_connected && d.agent_count > 0) {
+            window.location.replace('/');
+            return;
+          }
+        }
+      } catch (_) { /* backend unreachable — show the wizard */ }
+      document.querySelector('.wizard').style.visibility = 'visible';
+    }
 
     function goStep(n) {
       document.getElementById(`panel${step}`).classList.remove('active');
@@ -207,16 +224,15 @@
     }
 
     function skip() {
-      localStorage.setItem('uap_setup_complete', '1');
-    }
-
-    function finish() {
-      localStorage.setItem('uap_setup_complete', '1');
       window.location.href = '/';
     }
 
-    // Allow Enter to trigger test
+    function finish() {
+      window.location.href = '/';
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+      checkAlreadyConfigured();
       document.getElementById('apiKey').addEventListener('keydown', e => {
         if (e.key === 'Enter') testKey();
       });

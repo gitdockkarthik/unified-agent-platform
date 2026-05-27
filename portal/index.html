@@ -71,10 +71,18 @@
     let allAgents = [];
 
     async function load() {
-      if (!localStorage.getItem('uap_setup_complete')) {
-        window.location.href = '/setup.html';
-        return;
-      }
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/platform/status`, {
+          headers: { 'X-API-Key': window.__CONFIG__?.API_KEY ?? '' },
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (!d.anthropic_connected || d.agent_count === 0) {
+            window.location.replace('/setup.html');
+            return;
+          }
+        }
+      } catch (_) { /* backend unreachable — show catalogue anyway */ }
       try {
         allAgents = await fetchAgents();
         render(allAgents);
