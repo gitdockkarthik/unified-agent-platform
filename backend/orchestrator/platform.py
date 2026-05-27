@@ -31,6 +31,12 @@ async def bootstrap() -> dict:
     return {"api_key": get_backend_api_key() or ""}
 
 
+@router.get("/agent-token")
+async def agent_token() -> dict:
+    """Public endpoint — no auth required. Returns the registration token for agent self-registration."""
+    return {"registration_token": get_backend_api_key() or ""}
+
+
 @router.get("/status")
 async def platform_status(db: AsyncSession = Depends(get_db)) -> dict:
     """Public endpoint — no auth required (used by setup redirect logic)."""

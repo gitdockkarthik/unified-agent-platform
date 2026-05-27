@@ -35,15 +35,31 @@ class InvokeResponse(BaseModel):
 
 
 async def _register_self() -> None:
-    if not settings.registry_url or not settings.backend_api_key:
-        logger.info("Self-registration skipped: REGISTRY_URL or BACKEND_API_KEY not set")
+    if not settings.registry_url:
+        logger.info("Self-registration skipped: REGISTRY_URL not set")
         return
 
     manifest = json.loads((Path(__file__).parent / "manifest.json").read_text())
-    headers = {"X-API-Key": settings.backend_api_key}
     base = settings.registry_url.rstrip("/")
 
     async with httpx.AsyncClient(timeout=10.0) as client:
+        # Fetch API key dynamically — agents don't need BACKEND_API_KEY in env.
+        api_key = ""
+        try:
+            token_resp = await client.get(f"{base}/api/platform/agent-token")
+            token_resp.raise_for_status()
+            api_key = token_resp.json().get("registration_token", "")
+        except Exception as exc:
+            logger.warning("Self-registration: could not fetch agent-token: %s", exc)
+
+        if not api_key:
+            api_key = settings.backend_api_key  # legacy env-var fallback
+
+        if not api_key:
+            logger.error("Self-registration skipped: no registration token available")
+            return
+
+        headers = {"X-API-Key": api_key}
         reg_resp = await client.post(
             f"{base}/api/registry/agents",
             json={
