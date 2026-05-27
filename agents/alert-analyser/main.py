@@ -12,6 +12,7 @@ from agent import AgentRunner
 from config import settings
 from routes_dashboard import router as dashboard_router
 from routes_reports import router as reports_router
+from routes_settings import router as settings_router
 from tools.dashboard_builder import DashboardBuilderTool
 from tools.noise_detector import NoiseDetectorTool
 from tools.source import FileSource
@@ -115,6 +116,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=settings.agent_name, version="0.1.0", lifespan=lifespan)
 app.include_router(dashboard_router)
 app.include_router(reports_router)
+app.include_router(settings_router)
 
 
 @app.get("/health")

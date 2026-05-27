@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alert Analyser Settings — UAP</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background: #f4f6f9; color: #1a1f2e; }
+    .subnav { display: flex; background: var(--navy-1); border-bottom: 1px solid var(--border); padding: 0 40px; }
+    .subnav__link { display: inline-flex; align-items: center; gap: 6px; padding: 13px 16px; font-size: .85rem; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; text-decoration: none; transition: color var(--t), border-color var(--t); }
+    .subnav__link:hover { color: var(--text); }
+    .subnav__link--active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+    .content { padding: 36px 40px; max-width: 680px; }
+    .page-heading { margin-bottom: 28px; }
+    .page-heading__title { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; color: #1a1f2e; }
+    .page-heading__sub { font-size: .88rem; color: #64748b; }
+    .settings-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 28px 32px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .settings-card__title { font-size: 1rem; font-weight: 700; color: #1a1f2e; margin-bottom: 4px; }
+    .settings-card__sub { font-size: .83rem; color: #64748b; margin-bottom: 20px; }
+    .source-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    .source-option { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .source-option:hover { border-color: var(--accent); background: #f8faff; }
+    .source-option--selected { border-color: var(--accent); background: #f0f5ff; }
+    .source-option input[type=radio] { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+    .source-option__info { flex: 1; }
+    .source-option__label { font-weight: 600; font-size: .9rem; color: #1a1f2e; }
+    .source-option__desc { font-size: .8rem; color: #64748b; margin-top: 2px; }
+    .opsgenie-fields { display: none; flex-direction: column; gap: 16px; padding: 20px; background: #f8faff; border: 1px solid #dbeafe; border-radius: 8px; margin-bottom: 24px; }
+    .opsgenie-fields.visible { display: flex; }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-group label { font-size: .83rem; font-weight: 600; color: #374151; }
+    .field-group input { padding: 9px 12px; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: .9rem; color: #1a1f2e; background: #fff; outline: none; transition: border-color .15s; }
+    .field-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+    .field-group__hint { font-size: .75rem; color: #9ca3af; }
+    .btn-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .btn-save { padding: 10px 24px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: .9rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+    .btn-save:hover { opacity: .88; }
+    .btn-save:disabled { opacity: .5; cursor: not-allowed; }
+    .sync-status { display: none; padding: 12px 16px; border-radius: 8px; font-size: .85rem; }
+    .sync-status.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; display: block; }
+    .sync-status.error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; display: block; }
+    .sync-status.loading { background: #f8faff; border: 1px solid #dbeafe; color: #3b82f6; display: block; }
+    .status-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px 32px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .status-card__title { font-size: .9rem; font-weight: 700; color: #1a1f2e; margin-bottom: 16px; }
+    .status-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: .86rem; }
+    .status-row:last-child { border-bottom: none; }
+    .status-row__label { color: #64748b; }
+    .status-row__value { font-weight: 600; color: #1a1f2e; }
+    .badge-source { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+    .badge-source--opsgenie { background: #dbeafe; color: #1d4ed8; }
+    .badge-source--file { background: #f1f5f9; color: #475569; }
+    .badge-source--synthetic { background: #fef9c3; color: #92400e; }
+    @media (max-width: 768px) { .subnav { padding: 0 20px; } .content { padding: 20px; } .settings-card { padding: 20px; } }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="/" class="topbar__brand">
+      <div class="topbar__logo">UAP</div>
+      <span class="topbar__name">Unified <span>Agent Platform</span></span>
+    </a>
+    <nav class="topbar__nav">
+      <a href="/" class="topbar__link">Agents</a>
+      <a href="/admin/index.html" class="topbar__link">Admin</a>
+    </nav>
+    <div class="topbar__right" style="font-size:.85rem;color:var(--text-muted)">Alert Analyser</div>
+  </header>
+
+  <nav class="subnav">
+    <a href="/chat.html?agent=alert-analyser" class="subnav__link">💬 Chat</a>
+    <a href="/agents/alert-analyser/dashboard.html" class="subnav__link">📊 Dashboard</a>
+    <a href="/agents/alert-analyser/reports.html" class="subnav__link">📁 Reports</a>
+    <a href="/agents/alert-analyser/settings.html" class="subnav__link subnav__link--active">⚙ Settings</a>
+  </nav>
+
+  <div class="content">
+    <div class="page-heading">
+      <div class="page-heading__title">Data Source Settings</div>
+      <div class="page-heading__sub">Choose how alert data is loaded into the analyser</div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card__title">Alert Source</div>
+      <div class="settings-card__sub">Select the source from which alerts will be fetched or uploaded</div>
+
+      <div class="source-options">
+        <label class="source-option" id="opt-file">
+          <input type="radio" name="source_type" value="file" checked>
+          <div class="source-option__info">
+            <div class="source-option__label">File Upload</div>
+            <div class="source-option__desc">Upload a JSON or CSV export from OpsGenie via the Reports page</div>
+          </div>
+        </label>
+        <label class="source-option" id="opt-opsgenie">
+          <input type="radio" name="source_type" value="opsgenie">
+          <div class="source-option__info">
+            <div class="source-option__label">OpsGenie / JSM API</div>
+            <div class="source-option__desc">Fetch alerts live from the Atlassian JSM Ops API using Basic Auth</div>
+          </div>
+        </label>
+        <label class="source-option" id="opt-synthetic">
+          <input type="radio" name="source_type" value="synthetic">
+          <div class="source-option__info">
+            <div class="source-option__label">Synthetic Data</div>
+            <div class="source-option__desc">Auto-generate realistic demo alerts — no credentials required</div>
+          </div>
+        </label>
+      </div>
+
+      <div class="opsgenie-fields" id="opsgenieFields">
+        <div class="field-group">
+          <label for="cloudId">Cloud ID</label>
+          <input type="text" id="cloudId" placeholder="e.g. a1b2c3d4-e5f6-7890-abcd-ef1234567890" autocomplete="off">
+          <span class="field-group__hint">Found in Atlassian Admin → Products → JSM Ops → API settings</span>
+        </div>
+        <div class="field-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="off">
+        </div>
+        <div class="field-group">
+          <label for="apiToken">API Token</label>
+          <input type="password" id="apiToken" placeholder="Atlassian API token" autocomplete="new-password">
+          <span class="field-group__hint">Generate at id.atlassian.com/manage-profile/security/api-tokens</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-save" id="saveBtn" onclick="saveAndSync()">Save &amp; Sync</button>
+        <button class="btn-save" id="saveOnlyBtn" onclick="saveOnly()" style="background:#64748b">Save Only</button>
+      </div>
+
+      <div class="sync-status" id="syncStatus"></div>
+    </div>
+
+    <div class="status-card" id="statusCard" style="display:none">
+      <div class="status-card__title">Sync Status</div>
+      <div class="status-row">
+        <span class="status-row__label">Source type</span>
+        <span class="status-row__value" id="stSource">—</span>
+      </div>
+      <div class="status-row">
+        <span class="status-row__label">Last synced</span>
+        <span class="status-row__value" id="stLastSynced">Never</span>
+      </div>
+      <div class="status-row">
+        <span class="status-row__label">Alerts fetched</span>
+        <span class="status-row__value" id="stAlertCount">—</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/config.js?v=2"></script>
+  <script src="/js/portal.js?v=2"></script>
+  <script>
+    const SLUG  = 'alert-analyser';
+    const PROXY = `${BACKEND_URL}/api/agents/${SLUG}/proxy`;
+
+    // ── radio highlight ──────────────────────────────────────────────────────
+    document.querySelectorAll('input[name=source_type]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.querySelectorAll('.source-option').forEach(el => el.classList.remove('source-option--selected'));
+        radio.closest('.source-option').classList.add('source-option--selected');
+        document.getElementById('opsgenieFields').classList.toggle('visible', radio.value === 'opsgenie');
+      });
+    });
+
+    // ── load saved settings ──────────────────────────────────────────────────
+    async function loadSettings() {
+      try {
+        const res = await fetch(`${PROXY}/settings`);
+        if (!res.ok) return;
+        const cfg = await res.json();
+        const type = cfg.source_type || 'file';
+        const radio = document.querySelector(`input[name=source_type][value="${type}"]`);
+        if (radio) {
+          radio.checked = true;
+          radio.closest('.source-option').classList.add('source-option--selected');
+          document.getElementById('opsgenieFields').classList.toggle('visible', type === 'opsgenie');
+        }
+        if (cfg.cloud_id) document.getElementById('cloudId').value = cfg.cloud_id;
+        if (cfg.email)    document.getElementById('email').value    = cfg.email;
+        updateStatusCard(cfg);
+      } catch (_) {}
+    }
+
+    function updateStatusCard(cfg) {
+      const card = document.getElementById('statusCard');
+      if (!cfg.source_type) return;
+      card.style.display = '';
+
+      const type = cfg.source_type;
+      const badgeClass = type === 'opsgenie' ? 'badge-source--opsgenie'
+                       : type === 'synthetic' ? 'badge-source--synthetic'
+                       : 'badge-source--file';
+      document.getElementById('stSource').innerHTML = `<span class="badge-source ${badgeClass}">${type}</span>`;
+
+      if (cfg.last_synced) {
+        const d = new Date(cfg.last_synced);
+        document.getElementById('stLastSynced').textContent = d.toLocaleString();
+      } else {
+        document.getElementById('stLastSynced').textContent = 'Never';
+      }
+
+      document.getElementById('stAlertCount').textContent =
+        cfg.alert_count != null ? `${cfg.alert_count} alerts` : '—';
+    }
+
+    function getFormPayload() {
+      const type = document.querySelector('input[name=source_type]:checked').value;
+      return {
+        source_type: type,
+        cloud_id:  document.getElementById('cloudId').value.trim(),
+        email:     document.getElementById('email').value.trim(),
+        api_token: document.getElementById('apiToken').value,
+      };
+    }
+
+    function showStatus(msg, cls) {
+      const el = document.getElementById('syncStatus');
+      el.textContent = msg;
+      el.className = `sync-status ${cls}`;
+    }
+
+    async function saveOnly() {
+      const btn = document.getElementById('saveOnlyBtn');
+      btn.disabled = true;
+      showStatus('Saving…', 'loading');
+      try {
+        const res = await fetch(`${PROXY}/settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(getFormPayload()),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        showStatus('Settings saved.', 'success');
+        loadSettings();
+      } catch (err) {
+        showStatus(`Error: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function saveAndSync() {
+      const payload = getFormPayload();
+      if (payload.source_type === 'opsgenie') {
+        if (!payload.cloud_id || !payload.email || !payload.api_token) {
+          showStatus('Please fill in Cloud ID, Email and API Token before syncing.', 'error');
+          return;
+        }
+      }
+
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      showStatus('Saving settings…', 'loading');
+
+      try {
+        const saveRes = await fetch(`${PROXY}/settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!saveRes.ok) throw new Error(await saveRes.text());
+
+        if (payload.source_type === 'opsgenie') {
+          showStatus('Fetching alerts from OpsGenie / JSM…', 'loading');
+          const syncRes = await fetch(`${PROXY}/settings/sync`, { method: 'POST' });
+          if (!syncRes.ok) {
+            const body = await syncRes.json().catch(() => ({ detail: syncRes.statusText }));
+            throw new Error(body.detail || syncRes.statusText);
+          }
+          const data = await syncRes.json();
+          showStatus(`Synced successfully — ${data.alert_count} alerts fetched at ${new Date(data.last_synced).toLocaleString()}`, 'success');
+          updateStatusCard({ ...payload, last_synced: data.last_synced, alert_count: data.alert_count });
+        } else {
+          showStatus('Settings saved.', 'success');
+          loadSettings();
+        }
+      } catch (err) {
+        showStatus(`Error: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    loadSettings();
+  </script>
+</body>
+</html>
