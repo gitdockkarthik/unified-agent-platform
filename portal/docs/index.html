@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Documentation — Unified Agent Platform</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=3">
   <style>
     /* ── Docs layout ──────────────────────────────────────────────────────────── */
     .docs-page { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
@@ -445,8 +445,8 @@ curl -s -X POST http://localhost:8000/api/registry/agents/&lt;id&gt;/publish \
             </table>
           </div>
           <p class="docs-p">
-            All pages share <code class="docs-inline-code">/css/style.css</code> and
-            <code class="docs-inline-code">/js/portal.js</code>.
+            All pages share <code class="docs-inline-code">/css/style.css?v=3</code> and
+            <code class="docs-inline-code">/js/portal.js?v=3</code>.
             Page-specific logic lives in inline <code class="docs-inline-code">&lt;script&gt;</code> tags
             at the bottom of each file — no build step required.
           </p>
@@ -458,7 +458,7 @@ curl -s -X POST http://localhost:8000/api/registry/agents/&lt;id&gt;/publish \
             The portal reads two runtime values from the environment.
             At container startup, <code class="docs-inline-code">docker-entrypoint.sh</code> runs
             <code class="docs-inline-code">envsubst</code> to write
-            <code class="docs-inline-code">/js/config.js</code> from the template.
+            <code class="docs-inline-code">/js/config.js?v=3</code> from the template.
             Every page then imports this file before <code class="docs-inline-code">portal.js</code>.
           </p>
           <div class="docs-table-wrap">
@@ -647,7 +647,7 @@ curl -s -X POST http://localhost:8000/api/registry/agents/&lt;id&gt;/publish \
               <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
               <tbody>
                 <tr><td>BACKEND_URL</td><td><strong>Yes</strong></td><td>Base URL the portal JS uses to reach the backend. In docker-compose: <code>http://backend:8000</code></td></tr>
-                <tr><td>BACKEND_API_KEY</td><td><strong>Yes</strong></td><td>Injected into <code>/js/config.js</code> at container startup</td></tr>
+                <tr><td>BACKEND_API_KEY</td><td><strong>Yes</strong></td><td>Injected into <code>/js/config.js?v=3</code> at container startup</td></tr>
                 <tr><td>PORTAL_PORT</td><td>No</td><td>Host-side port binding in docker-compose. Default: <code>3000</code></td></tr>
               </tbody>
             </table>
