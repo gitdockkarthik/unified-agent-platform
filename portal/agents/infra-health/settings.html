@@ -98,8 +98,6 @@
     const SLUG = 'infra-health-check';
 
     async function loadStatus() {
-      const backendUrl = (window.__CONFIG__?.BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
-      const apiKey     = _apiKey;
       try {
         // Get agent metadata from registry
         const agent = await fetchAgent(SLUG);
@@ -108,8 +106,8 @@
         document.getElementById('stUrl').textContent     = agent.invoke_url || '(managed)';
 
         // Ping the agent health endpoint via backend proxy
-        const res = await fetch(`${backendUrl}/api/agents/${SLUG}/proxy/health`, {
-          headers: { 'X-API-Key': apiKey },
+        const res = await fetch(`${BACKEND_URL}/api/agents/${SLUG}/proxy/health`, {
+          headers: _authHeaders(),
         });
         if (res.ok) {
           document.getElementById('stStatus').innerHTML = '<span class="badge-ok">Healthy</span>';
@@ -125,4 +123,3 @@
   </script>
 </body>
 </html>
-/* Wed May 27 15:29:33 IST 2026 */
