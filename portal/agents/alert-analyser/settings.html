@@ -157,6 +157,8 @@
     const SLUG  = 'alert-analyser';
     const PROXY = `${BACKEND_URL}/api/agents/${SLUG}/proxy`;
 
+    const authHeaders = () => ({ 'X-API-Key': window.__CONFIG__?.API_KEY ?? '' });
+
     // ── radio highlight ──────────────────────────────────────────────────────
     document.querySelectorAll('input[name=source_type]').forEach(radio => {
       radio.addEventListener('change', () => {
@@ -169,7 +171,7 @@
     // ── load saved settings ──────────────────────────────────────────────────
     async function loadSettings() {
       try {
-        const res = await fetch(`${PROXY}/settings`);
+        const res = await fetch(`${PROXY}/settings`, { headers: authHeaders() });
         if (!res.ok) return;
         const cfg = await res.json();
         const type = cfg.source_type || 'file';
@@ -230,7 +232,7 @@
       try {
         const res = await fetch(`${PROXY}/settings`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify(getFormPayload()),
         });
         if (!res.ok) throw new Error(await res.text());
@@ -259,14 +261,17 @@
       try {
         const saveRes = await fetch(`${PROXY}/settings`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
         if (!saveRes.ok) throw new Error(await saveRes.text());
 
         if (payload.source_type === 'opsgenie') {
           showStatus('Fetching alerts from OpsGenie / JSM…', 'loading');
-          const syncRes = await fetch(`${PROXY}/settings/sync`, { method: 'POST' });
+          const syncRes = await fetch(`${PROXY}/settings/sync`, {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          });
           if (!syncRes.ok) {
             const body = await syncRes.json().catch(() => ({ detail: syncRes.statusText }));
             throw new Error(body.detail || syncRes.statusText);
