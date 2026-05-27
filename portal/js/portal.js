@@ -212,6 +212,30 @@ function renderMarkdown(raw) {
   s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
   s = s.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
   s = s.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+  // Tables — header row, separator row (|---|), then body rows
+  s = s.replace(
+    /^([ \t]*\|[^\n]+\|[ \t]*)\n[ \t]*\|[-: |]+\|\n((?:[ \t]*\|[^\n]+\|[ \t]*\n?)*)/gm,
+    (_, headerLine, bodyLines) => {
+      const parseRow = row =>
+        row.replace(/^[ \t]*\|/, '').replace(/\|[ \t]*$/, '').split('|').map(c => c.trim());
+      const headers = parseRow(headerLine);
+      const rows = bodyLines.trim()
+        ? bodyLines.trim().split('\n').map(parseRow)
+        : [];
+      let html = '<table class="md-table"><thead><tr>';
+      html += headers.map(h => `<th>${h}</th>`).join('');
+      html += '</tr></thead>';
+      if (rows.length) {
+        html += '<tbody>';
+        for (const cells of rows) {
+          html += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+        }
+        html += '</tbody>';
+      }
+      html += '</table>';
+      return html;
+    }
+  );
   // Unordered lists
   s = s.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
   s = s.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);

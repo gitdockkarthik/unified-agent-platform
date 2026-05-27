@@ -24,7 +24,6 @@
     <!-- Sidebar -->
     <aside class="chat-sidebar" id="sidebar">
       <div class="chat-sidebar__header">
-        <div class="chat-sidebar__agent-icon" id="sidebar-icon">—</div>
         <div class="chat-sidebar__name" id="sidebar-name">Loading…</div>
         <div class="chat-sidebar__desc" id="sidebar-desc"></div>
       </div>
@@ -180,7 +179,6 @@
     const chatForm     = document.getElementById('chat-form');
     const chatInput    = document.getElementById('chat-input');
     const sendBtn      = document.getElementById('send-btn');
-    const sidebarIcon  = document.getElementById('sidebar-icon');
     const sidebarName  = document.getElementById('sidebar-name');
     const sidebarDesc  = document.getElementById('sidebar-desc');
     const sidebarModel = document.getElementById('sidebar-model');
@@ -209,8 +207,6 @@
       document.querySelector('.chat-sidebar').classList.add(acClass);
 
       // Populate sidebar
-      const initial = slug[0].toUpperCase();
-      sidebarIcon.textContent  = initial;
       sidebarName.textContent  = agent.name;
       sidebarDesc.textContent  = agent.description || '';
       sidebarModel.textContent = agent.model || '—';
