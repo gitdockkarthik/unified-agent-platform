@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 52" width="220" height="52">
+  <polygon points="8,46 24,8 24,46" fill="#29B6F6"/>
+  <polygon points="24,8 40,46 24,46" fill="#26C6DA" opacity="0.85"/>
+  <polygon points="24,30 40,46 24,46" fill="#FF7043" opacity="0.9"/>
+  <polygon points="8,46 18,38 24,46" fill="#AB47BC" opacity="0.85"/>
+  <text x="50" y="30" font-family="'Segoe UI', Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="-0.5" fill="#ffffff">Agents<tspan fill="#2dd4a0">IQ</tspan></text>
+  <text x="50" y="44" font-family="'Segoe UI', Arial, sans-serif" font-size="8.5" font-weight="400" letter-spacing="1.8" fill="#94a3b8">MULTI-DOMAIN AI PLATFORM</text>
+</svg>
