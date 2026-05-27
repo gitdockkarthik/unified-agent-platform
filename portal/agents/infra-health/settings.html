@@ -95,10 +95,11 @@
   <script src="/js/config.js?v=3"></script>
   <script src="/js/portal.js?v=3"></script>
   <script>
-    const SLUG  = 'infra-health';
-    const PROXY = `${BACKEND_URL}/api/agents/${SLUG}/proxy`;
+    const SLUG = 'infra-health';
 
     async function loadStatus() {
+      const backendUrl = (window.__CONFIG__?.BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
+      const apiKey     = window.__CONFIG__?.API_KEY ?? '';
       try {
         // Get agent metadata from registry
         const agent = await fetchAgent(SLUG);
@@ -106,8 +107,10 @@
         document.getElementById('stVersion').textContent = agent.version || '—';
         document.getElementById('stUrl').textContent     = agent.invoke_url || '(managed)';
 
-        // Ping the agent health endpoint via proxy
-        const res = await fetch(`${PROXY}/health`, { headers: { 'X-API-Key': window.__CONFIG__?.API_KEY ?? '' } });
+        // Ping the agent health endpoint via backend proxy
+        const res = await fetch(`${backendUrl}/api/agents/${SLUG}/proxy/health`, {
+          headers: { 'X-API-Key': apiKey },
+        });
         if (res.ok) {
           document.getElementById('stStatus').innerHTML = '<span class="badge-ok">Healthy</span>';
         } else {
