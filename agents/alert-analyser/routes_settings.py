@@ -57,18 +57,43 @@ async def load_config_from_db() -> dict:
     from models import AgentConfig
 
     if SessionLocal is None:
+        logger.warning("load_config_from_db: DATABASE_URL not set — no DB session available")
         return {}
     try:
         async with SessionLocal() as session:
             rows = (await session.execute(select(AgentConfig))).scalars().all()
-        db_cfg = {
-            r.key: json.loads(decrypt(r.value) if is_secret_key(r.key) else r.value)
-            for r in rows
-        }
+
+        logger.info(
+            "load_config_from_db: found %d row(s) in agent_config — keys: %s",
+            len(rows),
+            [r.key for r in rows],
+        )
+
+        if not rows:
+            return {}
+
+        db_cfg: dict = {}
+        for r in rows:
+            secret = is_secret_key(r.key)
+            try:
+                raw = decrypt(r.value) if secret else r.value
+                db_cfg[r.key] = json.loads(raw)
+                logger.debug("load_config_from_db: loaded key=%r (secret=%s)", r.key, secret)
+            except Exception as exc:
+                logger.error(
+                    "load_config_from_db: failed to decode key=%r (secret=%s, "
+                    "stored_prefix=%r): %s",
+                    r.key,
+                    secret,
+                    r.value[:20] if r.value else "",
+                    exc,
+                )
+
         _config.update(db_cfg)
+        logger.info("load_config_from_db: successfully loaded keys: %s", list(db_cfg))
         return db_cfg
     except Exception:
-        logger.exception("Failed to load config from DB")
+        logger.exception("load_config_from_db: DB query failed")
         return {}
 
 

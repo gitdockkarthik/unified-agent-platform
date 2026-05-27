@@ -108,16 +108,23 @@ async def _init_config() -> None:
     from database import engine
     from models import Base
 
-    if engine is not None:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    if engine is None:
+        logger.warning("_init_config: DATABASE_URL not configured — skipping DB config load")
+        return
+
+    # Log masked URL so we can verify it's pointing at the right database.
+    logger.info("_init_config: connecting to %s", str(engine.url))
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("_init_config: agent_config table ensured")
 
     db_cfg = await load_config_from_db()
     if not db_cfg:
-        logger.info("No saved config found — waiting for user setup")
+        logger.info("_init_config: no saved config found — waiting for user setup")
         return
 
-    logger.info("Config loaded from DB — source_type: %s", db_cfg.get("source_type", "file"))
+    logger.info("_init_config: config loaded from DB — source_type: %s", db_cfg.get("source_type", "file"))
 
     if (
         db_cfg.get("source_type") == "opsgenie"

@@ -1,6 +1,9 @@
+import logging
 import os
 
 from cryptography.fernet import Fernet, InvalidToken
+
+logger = logging.getLogger(__name__)
 
 _key = os.getenv("ENCRYPTION_KEY")
 _fernet = Fernet(_key.encode()) if _key else None
@@ -14,10 +17,20 @@ def encrypt(value: str) -> str:
 
 def decrypt(value: str) -> str:
     if not _fernet:
+        # No ENCRYPTION_KEY — if value was encrypted by a previous instance, json.loads will fail.
+        logger.debug("decrypt: ENCRYPTION_KEY not set, returning value as-is")
         return value
     try:
         return _fernet.decrypt(value.encode()).decode()
-    except (InvalidToken, Exception):
+    except InvalidToken:
+        # Key mismatch or value was stored unencrypted (e.g. ENCRYPTION_KEY added later).
+        logger.warning(
+            "decrypt: InvalidToken — ENCRYPTION_KEY mismatch or value was not encrypted; "
+            "returning raw value (json.loads may fail)"
+        )
+        return value
+    except Exception as exc:
+        logger.warning("decrypt: unexpected error (%s); returning raw value", exc)
         return value
 
 
