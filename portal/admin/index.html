@@ -125,6 +125,7 @@
 
     // ── Fetch & render ─────────────────────────────────────────────────────────
     async function load() {
+      await portalReady;
       try {
         allAgents = await fetchAllAgents();
         updateCounts();
