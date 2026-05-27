@@ -140,6 +140,11 @@
 
     // On load: if already configured, skip wizard.
     async function checkAlreadyConfigured() {
+      if (new URLSearchParams(window.location.search).get('force') === 'true') {
+        document.getElementById('generatedKey').textContent = generateKey();
+        document.querySelector('.wizard').style.visibility = 'visible';
+        return;
+      }
       try {
         const r = await fetch(`${BACKEND_URL}/api/platform/status`);
         if (r.ok) {
