@@ -71,6 +71,10 @@
     let allAgents = [];
 
     async function load() {
+      if (!localStorage.getItem('uap_setup_complete')) {
+        window.location.href = '/setup.html';
+        return;
+      }
       try {
         allAgents = await fetchAgents();
         render(allAgents);
@@ -117,6 +121,10 @@
           'cur-analyser': [
             { label: 'Dashboard', href: '/agents/cur-analyser/dashboard.html' },
             { label: 'Reports',   href: '/agents/cur-analyser/reports.html'   },
+            { label: 'Settings',  href: '/agents/cur-analyser/settings.html'  },
+          ],
+          'infra-health': [
+            { label: 'Settings',  href: '/agents/infra-health/settings.html'  },
           ],
         };
         const extras = (agentLinks[slug] || []).map(l =>

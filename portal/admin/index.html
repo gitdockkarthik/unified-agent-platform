@@ -22,7 +22,14 @@
     </div>
   </header>
 
-  <div class="admin-content">
+  <!-- Admin top tabs -->
+  <div class="admin-tabs" style="display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--navy-1);padding:0 40px;">
+    <button class="admin-tab admin-tab--active" id="tab-agents" onclick="switchTab('agents')" style="padding:13px 18px;background:transparent;border:none;border-bottom:2px solid var(--accent);color:var(--accent);font-size:.88rem;font-weight:600;cursor:pointer;margin-bottom:-1px;">Agents</button>
+    <button class="admin-tab" id="tab-platform" onclick="switchTab('platform')" style="padding:13px 18px;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text-muted);font-size:.88rem;font-weight:500;cursor:pointer;margin-bottom:-1px;">Platform</button>
+  </div>
+
+  <!-- Agents panel -->
+  <div id="panel-agents" class="admin-content">
     <h1 class="admin-title">Agent Registry</h1>
     <p class="admin-subtitle">Manage agent lifecycles — publish drafts, deprecate old versions.</p>
 
@@ -63,6 +70,48 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Platform panel -->
+  <div id="panel-platform" class="admin-content" style="display:none;max-width:680px;">
+    <h1 class="admin-title">Platform</h1>
+    <p class="admin-subtitle" style="margin-bottom:28px">Platform status and configuration.</p>
+
+    <div style="background:var(--navy-1);border:1px solid var(--border);border-radius:var(--r);padding:24px 28px;margin-bottom:20px;">
+      <div style="font-size:.95rem;font-weight:700;margin-bottom:16px;">Platform Status</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.86rem;">
+        <span style="color:var(--text-muted)">Anthropic API</span>
+        <span id="pt-api" style="font-weight:600">Checking…</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.86rem;">
+        <span style="color:var(--text-muted)">Model in use</span>
+        <span id="pt-model" style="font-weight:600">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.86rem;">
+        <span style="color:var(--text-muted)">Published agents</span>
+        <span id="pt-agents" style="font-weight:600">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-size:.86rem;">
+        <span style="color:var(--text-muted)">Platform version</span>
+        <span id="pt-version" style="font-weight:600">—</span>
+      </div>
+    </div>
+
+    <div style="background:var(--navy-1);border:1px solid var(--border);border-radius:var(--r);padding:24px 28px;">
+      <div style="font-size:.95rem;font-weight:700;margin-bottom:4px;">Edit Platform Config</div>
+      <div style="font-size:.83rem;color:var(--text-muted);margin-bottom:20px;">Test or update the Anthropic connection. Changes apply immediately.</div>
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:.83rem;font-weight:600;color:var(--text-muted);margin-bottom:6px;">Anthropic API Key</label>
+        <input id="cfg-key" type="password" placeholder="sk-ant-api03-…" autocomplete="new-password"
+          style="width:100%;padding:10px 13px;background:var(--navy-2);border:1.5px solid var(--border-hi);border-radius:6px;font-size:.9rem;color:var(--text);outline:none;">
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="testPlatformKey()" style="padding:10px 20px;background:var(--navy-2);color:var(--text);border:1.5px solid var(--border-hi);border-radius:6px;font-size:.88rem;font-weight:500;cursor:pointer;">Test Connection</button>
+      </div>
+      <div id="cfg-status" style="display:none;margin-top:14px;padding:11px 14px;border-radius:8px;font-size:.85rem;"></div>
     </div>
   </div>
 
@@ -165,6 +214,68 @@
     });
 
     load();
+
+    // ── Admin tab switching ────────────────────────────────────────────────────
+    function switchTab(tab) {
+      document.getElementById('panel-agents').style.display   = tab === 'agents'   ? '' : 'none';
+      document.getElementById('panel-platform').style.display = tab === 'platform' ? '' : 'none';
+      document.getElementById('tab-agents').style.borderBottomColor   = tab === 'agents'   ? 'var(--accent)' : 'transparent';
+      document.getElementById('tab-agents').style.color               = tab === 'agents'   ? 'var(--accent)' : 'var(--text-muted)';
+      document.getElementById('tab-platform').style.borderBottomColor = tab === 'platform' ? 'var(--accent)' : 'transparent';
+      document.getElementById('tab-platform').style.color             = tab === 'platform' ? 'var(--accent)' : 'var(--text-muted)';
+      if (tab === 'platform') loadPlatformStatus();
+    }
+
+    async function loadPlatformStatus() {
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/platform/status`, {
+          headers: { 'X-API-Key': window.__CONFIG__?.API_KEY ?? '' }
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        document.getElementById('pt-api').innerHTML     = d.anthropic_connected
+          ? '<span style="color:#22c55e;font-weight:600">✓ Connected</span>'
+          : '<span style="color:#ef4444;font-weight:600">✗ Not configured</span>';
+        document.getElementById('pt-model').textContent   = d.model   || '—';
+        document.getElementById('pt-agents').textContent  = d.agent_count ?? '—';
+        document.getElementById('pt-version').textContent = d.version || '—';
+      } catch (err) {
+        document.getElementById('pt-api').innerHTML = `<span style="color:var(--text-muted)">${err.message}</span>`;
+      }
+    }
+
+    async function testPlatformKey() {
+      const key = document.getElementById('cfg-key').value.trim();
+      const el  = document.getElementById('cfg-status');
+      if (!key) { showCfgStatus('Enter an API key first.', 'error'); return; }
+      showCfgStatus('Testing…', 'loading');
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/platform/test-anthropic`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: key }),
+        });
+        const d = await r.json();
+        if (d.success) {
+          showCfgStatus(`✓ Connected — model: ${d.model}`, 'success');
+        } else {
+          showCfgStatus(`✗ ${d.error || 'Failed'}`, 'error');
+        }
+      } catch (err) {
+        showCfgStatus(`✗ ${err.message}`, 'error');
+      }
+    }
+
+    function showCfgStatus(msg, type) {
+      const el = document.getElementById('cfg-status');
+      const styles = {
+        success: 'background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d',
+        error:   'background:#fef2f2;border:1px solid #fecaca;color:#dc2626',
+        loading: 'background:var(--navy-2);border:1px solid var(--border-hi);color:var(--text-muted)',
+      };
+      el.textContent = msg;
+      el.style.cssText = `display:block;margin-top:14px;padding:11px 14px;border-radius:8px;font-size:.85rem;${styles[type] || ''}`;
+    }
   </script>
 </body>
 </html>

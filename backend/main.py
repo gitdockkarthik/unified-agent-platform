@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import models  # noqa: F401 — registers all ORM models with Base metadata
 from core.config import settings
 from core.database import Base, engine
+from orchestrator.platform import router as platform_router
 from orchestrator.router import router as orchestrator_router
 from registry.router import router as registry_router
 
@@ -68,3 +69,4 @@ app.add_middleware(
 
 app.include_router(registry_router)
 app.include_router(orchestrator_router)
+app.include_router(platform_router)

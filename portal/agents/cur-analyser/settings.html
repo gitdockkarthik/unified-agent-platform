@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUR Analyser Settings — UAP</title>
+  <link rel="stylesheet" href="/css/style.css?v=3">
+  <style>
+    body { background: #f4f6f9; color: #1a1f2e; }
+    .subnav { display: flex; background: var(--navy-1); border-bottom: 1px solid var(--border); padding: 0 40px; }
+    .subnav__link { display: inline-flex; align-items: center; gap: 6px; padding: 13px 16px; font-size: .85rem; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; text-decoration: none; transition: color var(--t), border-color var(--t); }
+    .subnav__link:hover { color: var(--text); }
+    .subnav__link--active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+    .content { padding: 36px 40px; max-width: 680px; }
+    .page-heading { margin-bottom: 28px; }
+    .page-heading__title { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; color: #1a1f2e; }
+    .page-heading__sub { font-size: .88rem; color: #64748b; }
+    .settings-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 28px 32px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .settings-card__title { font-size: 1rem; font-weight: 700; color: #1a1f2e; margin-bottom: 4px; }
+    .settings-card__sub { font-size: .83rem; color: #64748b; margin-bottom: 20px; }
+    .source-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    .source-option { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: border-color .15s, background .15s; }
+    .source-option:hover { border-color: var(--accent); background: #f8faff; }
+    .source-option--selected { border-color: var(--accent); background: #f0f5ff; }
+    .source-option input[type=radio] { margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+    .source-option__info { flex: 1; }
+    .source-option__label { font-weight: 600; font-size: .9rem; color: #1a1f2e; }
+    .source-option__desc { font-size: .8rem; color: #64748b; margin-top: 2px; }
+    .btn-save { padding: 10px 24px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: .9rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+    .btn-save:hover { opacity: .88; }
+    .save-status { display: none; margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: .85rem; }
+    .save-status.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; display: block; }
+    .phase2-note { background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; font-size: .83rem; color: #92400e; margin-top: 8px; }
+    @media (max-width: 768px) { .subnav { padding: 0 20px; } .content { padding: 20px; } .settings-card { padding: 20px; } }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <a href="/" class="topbar__brand">
+      <img src='/assets/agentsiq-logo.svg' alt='AgentsIQ' style='height:44px;'>
+    </a>
+    <nav class="topbar__nav">
+      <a href="/" class="topbar__link">Agents</a>
+      <a href="/admin/index.html" class="topbar__link">Admin</a>
+    </nav>
+    <div class="topbar__right" style="font-size:.85rem;color:var(--text-muted)">CUR Analyser</div>
+  </header>
+
+  <nav class="subnav">
+    <a href="/chat.html?agent=cur-analyser" class="subnav__link">💬 Chat</a>
+    <a href="/agents/cur-analyser/dashboard.html" class="subnav__link">📊 Dashboard</a>
+    <a href="/agents/cur-analyser/reports.html" class="subnav__link">📁 Reports</a>
+    <a href="/agents/cur-analyser/settings.html" class="subnav__link subnav__link--active">⚙ Settings</a>
+  </nav>
+
+  <div class="content">
+    <div class="page-heading">
+      <div class="page-heading__title">Data Source Settings</div>
+      <div class="page-heading__sub">Choose how AWS cost data is loaded into the analyser</div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card__title">Cost Data Source</div>
+      <div class="settings-card__sub">Select the source for AWS Cost and Usage Report data</div>
+
+      <div class="source-options">
+        <label class="source-option" id="opt-file">
+          <input type="radio" name="source_type" value="file" checked>
+          <div class="source-option__info">
+            <div class="source-option__label">File Upload</div>
+            <div class="source-option__desc">Upload a CSV export from AWS Cost and Usage Reports via the Reports page</div>
+          </div>
+        </label>
+        <label class="source-option" id="opt-synthetic">
+          <input type="radio" name="source_type" value="synthetic">
+          <div class="source-option__info">
+            <div class="source-option__label">Synthetic Data</div>
+            <div class="source-option__desc">Auto-generate realistic AWS cost data for demonstration — no credentials required</div>
+          </div>
+        </label>
+      </div>
+
+      <div class="phase2-note">
+        AWS Cost Explorer API integration is planned for Phase 2. For now, export your CUR data from the AWS Billing console and upload via the Reports page.
+      </div>
+
+      <div style="margin-top:20px">
+        <button class="btn-save" onclick="savePreference()">Save Preference</button>
+      </div>
+      <div class="save-status" id="saveStatus">Preference saved.</div>
+    </div>
+  </div>
+
+  <script src="/js/config.js?v=3"></script>
+  <script src="/js/portal.js?v=3"></script>
+  <script>
+    const PREF_KEY = 'cur_analyser_source';
+
+    document.querySelectorAll('input[name=source_type]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.querySelectorAll('.source-option').forEach(el => el.classList.remove('source-option--selected'));
+        radio.closest('.source-option').classList.add('source-option--selected');
+      });
+    });
+
+    function loadPreference() {
+      const saved = localStorage.getItem(PREF_KEY) || 'file';
+      const radio = document.querySelector(`input[name=source_type][value="${saved}"]`);
+      if (radio) {
+        radio.checked = true;
+        radio.closest('.source-option').classList.add('source-option--selected');
+      }
+    }
+
+    function savePreference() {
+      const type = document.querySelector('input[name=source_type]:checked').value;
+      localStorage.setItem(PREF_KEY, type);
+      const el = document.getElementById('saveStatus');
+      el.className = 'save-status success';
+      setTimeout(() => { el.style.display = 'none'; el.className = 'save-status'; }, 3000);
+    }
+
+    loadPreference();
+  </script>
+</body>
+</html>

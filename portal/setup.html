@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup — AgentsIQ Studio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1a1f2e; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 40px 16px; }
+    .logo { margin-bottom: 36px; }
+    .logo img { height: 44px; }
+    .wizard { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 40px; width: 100%; max-width: 520px; box-shadow: 0 4px 24px rgba(0,0,0,.07); }
+    /* Step indicator */
+    .steps { display: flex; align-items: center; gap: 0; margin-bottom: 36px; }
+    .step { display: flex; align-items: center; gap: 8px; font-size: .82rem; font-weight: 600; color: #94a3b8; flex: 1; }
+    .step.active { color: #6366f1; }
+    .step.done  { color: #15803d; }
+    .step__dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e2e8f0; display: grid; place-items: center; font-size: .8rem; font-weight: 700; flex-shrink: 0; background: #fff; }
+    .step.active .step__dot { border-color: #6366f1; color: #6366f1; }
+    .step.done  .step__dot { border-color: #15803d; background: #15803d; color: #fff; }
+    .step__line { flex: 1; height: 2px; background: #e2e8f0; margin: 0 6px; }
+    .step__line.done { background: #15803d; }
+    /* Panel */
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .panel-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 6px; }
+    .panel-sub { font-size: .88rem; color: #64748b; margin-bottom: 24px; line-height: 1.5; }
+    /* Form elements */
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: .83rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    .field input { width: 100%; padding: 10px 13px; border: 1.5px solid #d1d5db; border-radius: 7px; font-size: .9rem; color: #1a1f2e; background: #fff; outline: none; transition: border-color .15s; }
+    .field input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+    .field__hint { font-size: .75rem; color: #9ca3af; margin-top: 5px; }
+    /* Buttons */
+    .btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-primary { padding: 10px 24px; background: #6366f1; color: #fff; border: none; border-radius: 7px; font-size: .9rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-ghost { padding: 10px 18px; background: transparent; color: #64748b; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: .88rem; font-weight: 500; cursor: pointer; transition: border-color .15s, color .15s; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-ghost:hover { border-color: #94a3b8; color: #374151; }
+    .btn-test { padding: 10px 18px; background: #f1f5f9; color: #374151; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: .88rem; font-weight: 500; cursor: pointer; transition: background .15s; }
+    .btn-test:hover { background: #e2e8f0; }
+    .btn-test:disabled { opacity: .45; cursor: not-allowed; }
+    /* Status messages */
+    .status-msg { margin-top: 14px; padding: 11px 14px; border-radius: 8px; font-size: .85rem; display: none; }
+    .status-msg.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; display: flex; align-items: center; gap: 8px; }
+    .status-msg.error   { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; display: flex; align-items: center; gap: 8px; }
+    .status-msg.loading { background: #f8faff; border: 1px solid #dbeafe; color: #3b82f6; display: flex; align-items: center; gap: 8px; }
+    /* Review rows */
+    .review-row { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f1f5f9; font-size: .86rem; }
+    .review-row:last-child { border-bottom: none; }
+    .review-row__label { color: #64748b; }
+    .review-row__value { font-weight: 600; }
+    .badge-ok  { padding: 2px 10px; border-radius: 999px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: .78rem; font-weight: 600; }
+    .badge-off { padding: 2px 10px; border-radius: 999px; background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b; font-size: .78rem; }
+    /* Done panel */
+    .done-icon { font-size: 2.8rem; margin-bottom: 16px; }
+    a { color: #6366f1; }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <img src="/assets/agentsiq-logo.svg" alt="AgentsIQ">
+  </div>
+
+  <div class="wizard">
+    <!-- Step indicator -->
+    <div class="steps">
+      <div class="step active" id="s1">
+        <div class="step__dot">1</div>
+        <span>API Key</span>
+      </div>
+      <div class="step__line" id="line1"></div>
+      <div class="step" id="s2">
+        <div class="step__dot">2</div>
+        <span>Review</span>
+      </div>
+      <div class="step__line" id="line2"></div>
+      <div class="step" id="s3">
+        <div class="step__dot">3</div>
+        <span>Done</span>
+      </div>
+    </div>
+
+    <!-- Step 1: API Key -->
+    <div class="panel active" id="panel1">
+      <div class="panel-title">Connect Anthropic</div>
+      <div class="panel-sub">Enter your Anthropic API key to power the AI agents. The key must already be configured in your deployment — this step verifies it's working.</div>
+      <div class="field">
+        <label for="apiKey">Anthropic API Key</label>
+        <input type="password" id="apiKey" placeholder="sk-ant-api03-…" autocomplete="new-password">
+        <div class="field__hint">Find your key at console.anthropic.com → API Keys</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-test" id="testBtn" onclick="testKey()">Test Connection</button>
+        <button class="btn-primary" id="next1Btn" onclick="goStep(2)" disabled>Next →</button>
+        <a href="/" class="btn-ghost" onclick="skip()">Skip setup</a>
+      </div>
+      <div class="status-msg" id="testStatus"></div>
+    </div>
+
+    <!-- Step 2: Review -->
+    <div class="panel" id="panel2">
+      <div class="panel-title">Review Platform</div>
+      <div class="panel-sub">Confirm your platform is connected and ready.</div>
+      <div id="reviewRows">
+        <div class="review-row"><span class="review-row__label">Platform URL</span><span class="review-row__value" id="rvUrl">—</span></div>
+        <div class="review-row"><span class="review-row__label">Backend status</span><span class="review-row__value" id="rvHealth">Checking…</span></div>
+        <div class="review-row"><span class="review-row__label">Anthropic API</span><span class="review-row__value" id="rvApi">—</span></div>
+        <div class="review-row"><span class="review-row__label">Agents registered</span><span class="review-row__value" id="rvAgents">—</span></div>
+      </div>
+      <div class="btn-row" style="margin-top:24px">
+        <button class="btn-ghost" onclick="goStep(1)">← Back</button>
+        <button class="btn-primary" onclick="goStep(3)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Done -->
+    <div class="panel" id="panel3">
+      <div class="done-icon">🎉</div>
+      <div class="panel-title">You're all set!</div>
+      <div class="panel-sub" style="margin-bottom:28px">AgentsIQ Studio is configured. Head to the catalogue to start chatting with your agents.</div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="finish()">Launch Studio →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = (window.__CONFIG__?.BACKEND_URL || 'http://localhost:8000').replace(/\/$/, '');
+    let step = 1;
+    let keyTested = false;
+
+    function goStep(n) {
+      document.getElementById(`panel${step}`).classList.remove('active');
+      // Mark previous step done
+      document.getElementById(`s${step}`).className = 'step done';
+      document.getElementById(`s${step}`).querySelector('.step__dot').textContent = '✓';
+      if (step < n && step <= 2) document.getElementById(`line${step}`).classList.add('done');
+      step = n;
+      document.getElementById(`panel${step}`).classList.add('active');
+      document.getElementById(`s${step}`).classList.add('active');
+      if (n === 2) populateReview();
+    }
+
+    function showMsg(id, msg, cls) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = `status-msg ${cls}`;
+    }
+
+    async function testKey() {
+      const key = document.getElementById('apiKey').value.trim();
+      if (!key) { showMsg('testStatus', 'Please enter your API key first.', 'error'); return; }
+      const btn = document.getElementById('testBtn');
+      const nextBtn = document.getElementById('next1Btn');
+      btn.disabled = true;
+      showMsg('testStatus', 'Testing connection…', 'loading');
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/platform/test-anthropic`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: key }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showMsg('testStatus', `✓ Connected — model: ${data.model}`, 'success');
+          keyTested = true;
+          nextBtn.disabled = false;
+        } else {
+          showMsg('testStatus', `✗ ${data.error || 'Connection failed'}`, 'error');
+          nextBtn.disabled = true;
+        }
+      } catch (err) {
+        showMsg('testStatus', `✗ Could not reach backend: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function populateReview() {
+      document.getElementById('rvUrl').textContent = BACKEND_URL;
+
+      // Health check
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/health`);
+        document.getElementById('rvHealth').innerHTML = r.ok
+          ? '<span class="badge-ok">Connected</span>'
+          : '<span class="badge-off">Error</span>';
+      } catch {
+        document.getElementById('rvHealth').innerHTML = '<span class="badge-off">Unreachable</span>';
+      }
+
+      // Anthropic key status
+      document.getElementById('rvApi').innerHTML = keyTested
+        ? '<span class="badge-ok">Verified</span>'
+        : '<span class="badge-off">Not tested</span>';
+
+      // Agent count
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/agents`);
+        const agents = await r.json();
+        document.getElementById('rvAgents').textContent = `${agents.length} published`;
+      } catch {
+        document.getElementById('rvAgents').textContent = '—';
+      }
+    }
+
+    function skip() {
+      localStorage.setItem('uap_setup_complete', '1');
+    }
+
+    function finish() {
+      localStorage.setItem('uap_setup_complete', '1');
+      window.location.href = '/';
+    }
+
+    // Allow Enter to trigger test
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('apiKey').addEventListener('keydown', e => {
+        if (e.key === 'Enter') testKey();
+      });
+    });
+  </script>
+  <script src="/js/config.js?v=3"></script>
+</body>
+</html>
