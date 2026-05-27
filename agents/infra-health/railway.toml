@@ -1,0 +1,18 @@
+# railway.toml — infra-health service
+#
+# Railway dashboard settings for this service:
+#   Source:          GitHub repo (this monorepo)
+#   Root Directory:  agents/infra-health/
+#   Dockerfile Path: Dockerfile   (relative to Root Directory)
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["**"]
+
+[deploy]
+# Dockerfile CMD already handles $PORT via ${PORT:-8002}; no override needed.
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
