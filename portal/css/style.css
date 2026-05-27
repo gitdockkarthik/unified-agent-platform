@@ -405,9 +405,9 @@ img { display: block; max-width: 100%; }
   border-radius: 999px;
   background: color-mix(in srgb, var(--ca, var(--accent)) 18%, transparent);
   border: 1px solid color-mix(in srgb, var(--ca, var(--accent)) 35%, transparent);
-  color: var(--ca, var(--accent));
+  color: #ffffff;
   font-size: .88rem;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 10px;
   line-height: 1.4;
   word-break: break-word;
