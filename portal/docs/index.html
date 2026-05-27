@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Documentation — Unified Agent Platform</title>
+  <title>Documentation — AgentsIQ Studio</title>
   <link rel="stylesheet" href="/css/style.css?v=3">
   <style>
     /* ── Docs layout ──────────────────────────────────────────────────────────── */
@@ -237,52 +237,58 @@
 
       <div class="docs-nav-group">
         <div class="docs-nav-group__label">Getting Started</div>
-        <a class="docs-nav-link" href="#overview">Overview</a>
-        <a class="docs-nav-link docs-nav-link--sub" href="#architecture">Architecture</a>
-        <a class="docs-nav-link" href="#prerequisites">Prerequisites</a>
-        <a class="docs-nav-link" href="#quickstart">Quickstart</a>
+        <a class="docs-nav-link" href="#getting-started">Overview</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#gs-access">Access</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#gs-env">Environment Variables</a>
       </div>
 
       <div class="docs-nav-group">
         <div class="docs-nav-group__label">Using the Portal</div>
-        <a class="docs-nav-link" href="#portal-pages">Pages Overview</a>
-        <a class="docs-nav-link" href="#portal-config">Configuration</a>
+        <a class="docs-nav-link" href="#portal">Portal Areas</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#portal-nav">Navigation</a>
       </div>
 
       <div class="docs-nav-group">
         <div class="docs-nav-group__label">Agent Catalogue</div>
-        <a class="docs-nav-link" href="#catalogue-how">How It Works</a>
-        <a class="docs-nav-link" href="#catalogue-cards">Agent Cards</a>
+        <a class="docs-nav-link" href="#catalogue">Agent Cards</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#catalogue-actions">Quick Actions</a>
       </div>
 
       <div class="docs-nav-group">
         <div class="docs-nav-group__label">Chat Interface</div>
-        <a class="docs-nav-link" href="#chat-sessions">Sessions</a>
-        <a class="docs-nav-link" href="#chat-streaming">Streaming</a>
-        <a class="docs-nav-link" href="#chat-history">History</a>
+        <a class="docs-nav-link" href="#chat">Chat Layout</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#chat-sessions">Sessions</a>
       </div>
 
       <div class="docs-nav-group">
         <div class="docs-nav-group__label">Operator Guide</div>
-        <a class="docs-nav-link" href="#admin-console">Admin Console</a>
-        <a class="docs-nav-link" href="#env-vars">Environment Variables</a>
-        <a class="docs-nav-link" href="#deployment">Deployment</a>
+        <a class="docs-nav-link" href="#operator">Admin Console</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#operator-platform">Platform Tab</a>
+      </div>
+
+      <div class="docs-nav-group">
+        <div class="docs-nav-group__label">Agent Settings</div>
+        <a class="docs-nav-link" href="#settings">Per-Agent Settings</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#settings-alert">Alert Analyser</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#settings-cur">CUR Analyser</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#settings-infra">Infra Health</a>
       </div>
 
       <div class="docs-nav-group">
         <div class="docs-nav-group__label">Client Delivery</div>
-        <a class="docs-nav-link" href="#client-what">What Clients Receive</a>
-        <a class="docs-nav-link" href="#client-setup">Setting Up an Agent</a>
-        <a class="docs-nav-link" href="#client-register">Registering with the Platform</a>
+        <a class="docs-nav-link" href="#delivery">Deployment</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#delivery-envvars">Required Variables</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#delivery-steps">Setup Steps</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#delivery-limitations">Known Limitations</a>
       </div>
 
       <div class="docs-nav-group">
         <div class="docs-nav-group__label">Agent Development</div>
-        <a class="docs-nav-link" href="#dev-contract">Invoke Contract</a>
-        <a class="docs-nav-link" href="#dev-schemas">Request &amp; Response Schemas</a>
-        <a class="docs-nav-link" href="#dev-stateless">Stateless Rule</a>
-        <a class="docs-nav-link" href="#dev-tools">Tool Use</a>
-        <a class="docs-nav-link" href="#dev-template">Agent Template</a>
+        <a class="docs-nav-link" href="#dev">Building Agents</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#dev-contract">Invoke Contract</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#dev-tools">Tools</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#dev-config">Config Persistence</a>
+        <a class="docs-nav-link docs-nav-link--sub" href="#dev-register">Registration</a>
       </div>
     </nav>
 
@@ -290,603 +296,403 @@
     <main class="docs-content" id="docs-content">
       <article class="docs-article">
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  GETTING STARTED                                                -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section class="docs-section" id="overview">
-          <h1 class="docs-h1">Unified Agent Platform</h1>
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!--  SECTION 1 — GETTING STARTED                                        -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <section class="docs-section" id="getting-started">
+          <h1 class="docs-h1">AgentsIQ Studio</h1>
           <p class="docs-lead">
-            A production-ready monorepo for hosting, orchestrating, and chatting with
-            specialised AI agents — each a standalone FastAPI service backed by Anthropic's Claude.
+            A multi-domain AI platform that brings intelligent agents to your operations team.
+            Each agent specialises in a specific domain — alert noise detection, cloud cost analysis,
+            infrastructure health — and provides an AI chatbot, dashboard, and reports
+            powered by your real data.
           </p>
 
-          <h2 class="docs-h2" id="architecture">Architecture</h2>
-          <p class="docs-p">The platform has four top-level components:</p>
+          <h2 class="docs-h2" id="gs-access">Access</h2>
+          <p class="docs-p">
+            The platform is available at <strong>studio.agentsiq.net</strong>.
+            Access is protected by Cloudflare Access — enter your email address
+            and you will receive a one-time verification code. No password to manage.
+          </p>
+          <p class="docs-p">
+            To deploy your own instance, you need exactly two environment variables set
+            before the application starts. Everything else is configured through the
+            <strong>Setup Wizard</strong> and individual agent <strong>Settings</strong> pages.
+          </p>
 
+          <h2 class="docs-h2" id="gs-env">Minimum Environment Variables</h2>
           <div class="docs-table-wrap">
             <table class="docs-table">
-              <thead><tr><th>Component</th><th>Path</th><th>Role</th></tr></thead>
+              <thead><tr><th>Variable</th><th>Description</th></tr></thead>
               <tbody>
-                <tr><td>backend/</td><td><code>/api</code></td><td>FastAPI service — agent registry, orchestration, chat history</td></tr>
-                <tr><td>portal/</td><td><code>:3000</code></td><td>Nginx + vanilla HTML/JS — catalogue, chat, admin, docs</td></tr>
-                <tr><td>agents/</td><td>each on its own port</td><td>Standalone FastAPI services, one per domain</td></tr>
-                <tr><td>shared/</td><td>Python package</td><td>Pydantic schemas shared by backend and agents</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="callout callout--tip">
-            <span class="callout__icon">💡</span>
-            <div class="callout__body">
-              <strong>Railway is the permanent production platform.</strong>
-              Each component deploys as a separate Railway service inside one project.
-              Docker Compose is for local development only.
-            </div>
-          </div>
-        </section>
-
-        <section class="docs-section" id="prerequisites">
-          <h2 class="docs-h2">Prerequisites</h2>
-          <ul class="docs-ul">
-            <li class="docs-li"><strong>Docker + Docker Compose v2</strong> — local dev stack</li>
-            <li class="docs-li"><strong>Python 3.11</strong> — agent development (not needed for portal-only work)</li>
-            <li class="docs-li"><strong>Anthropic API key</strong> — needed by backend and each agent</li>
-            <li class="docs-li"><strong>Git</strong></li>
-          </ul>
-        </section>
-
-        <section class="docs-section" id="quickstart">
-          <h2 class="docs-h2">Quickstart</h2>
-          <div class="steps">
-            <div class="step">
-              <div class="step__num">1</div>
-              <div class="step__body">
-                <div class="step__title">Clone and configure</div>
-                <div class="step__desc">Copy the env template and fill in your secrets.</div>
-                <div class="docs-code-block">
-                  <div class="docs-code-block__bar">
-                    <span class="docs-code-block__lang">bash</span>
-                    <button class="docs-code-block__copy" data-copy="git clone &lt;repo&gt; unified-agent-platform
-cd unified-agent-platform
-cp .env.example .env
-# Edit .env: set ANTHROPIC_API_KEY, BACKEND_API_KEY, SECRET_KEY">Copy</button>
-                  </div>
-                  <pre><code>git clone &lt;repo&gt; unified-agent-platform
-cd unified-agent-platform
-cp .env.example .env
-# Edit .env — set ANTHROPIC_API_KEY, BACKEND_API_KEY, SECRET_KEY</code></pre>
-                </div>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step__num">2</div>
-              <div class="step__body">
-                <div class="step__title">Start the dev stack</div>
-                <div class="step__desc">Boots PostgreSQL and the backend. Portal is served separately.</div>
-                <div class="docs-code-block">
-                  <div class="docs-code-block__bar">
-                    <span class="docs-code-block__lang">bash</span>
-                    <button class="docs-code-block__copy">Copy</button>
-                  </div>
-                  <pre><code>make dev       # starts postgres + backend (hot-reload)
-make migrate   # creates all DB tables (run once, or after model changes)</code></pre>
-                </div>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step__num">3</div>
-              <div class="step__body">
-                <div class="step__title">Register and publish your first agent</div>
-                <div class="step__desc">Use the admin form or curl.</div>
-                <div class="docs-code-block">
-                  <div class="docs-code-block__bar">
-                    <span class="docs-code-block__lang">bash</span>
-                    <button class="docs-code-block__copy">Copy</button>
-                  </div>
-                  <pre><code># Register
-curl -s -X POST http://localhost:8000/api/registry/agents \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-backend-api-key" \
-  -d '{
-    "name": "My First Agent",
-    "slug": "my-first-agent",
-    "description": "Answers questions helpfully.",
-    "system_prompt": "You are a helpful assistant.",
-    "model": "claude-sonnet-4-6"
-  }' | jq .id
-
-# Publish (paste the id from above)
-curl -s -X POST http://localhost:8000/api/registry/agents/&lt;id&gt;/publish \
-  -H "X-API-Key: your-backend-api-key" | jq .status</code></pre>
-                </div>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step__num">4</div>
-              <div class="step__body">
-                <div class="step__title">Open the portal</div>
-                <div class="step__desc">The agent appears in the catalogue at <code class="docs-inline-code">http://localhost:3000</code>.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="callout callout--note">
-            <span class="callout__icon">📋</span>
-            <div class="callout__body">
-              The FastAPI auto-docs are at
-              <code class="docs-inline-code">http://localhost:8000/docs</code> and
-              <code class="docs-inline-code">http://localhost:8000/redoc</code>.
-            </div>
-          </div>
-        </section>
-
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  PORTAL GUIDE                                                   -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section class="docs-section" id="portal-pages">
-          <h2 class="docs-h2">Pages Overview</h2>
-          <div class="page-nav">
-            <a class="page-pill" href="/"><span class="page-pill__badge"></span>/</a>
-            <a class="page-pill" href="/chat.html"><span class="page-pill__badge"></span>/chat.html</a>
-            <a class="page-pill" href="/admin/"><span class="page-pill__badge"></span>/admin/</a>
-            <a class="page-pill" href="/admin/register.html"><span class="page-pill__badge"></span>/admin/register.html</a>
-            <a class="page-pill" href="/docs/"><span class="page-pill__badge"></span>/docs/</a>
-          </div>
-          <div class="docs-table-wrap" style="margin-top:16px">
-            <table class="docs-table">
-              <thead><tr><th>URL</th><th>Page</th><th>Auth</th></tr></thead>
-              <tbody>
-                <tr><td>/</td><td>Agent catalogue — browse published agents</td><td>Public</td></tr>
-                <tr><td>/chat.html?agent=slug</td><td>Chat UI — load any published agent by slug</td><td>Needs API key (invocations)</td></tr>
-                <tr><td>/admin/</td><td>Registry table — all agents, lifecycle actions</td><td>API key required</td></tr>
-                <tr><td>/admin/register.html</td><td>Registration form — create new agent</td><td>API key required</td></tr>
-                <tr><td>/docs/</td><td>This documentation</td><td>Public</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="docs-p">
-            All pages share <code class="docs-inline-code">/css/style.css?v=3</code> and
-            <code class="docs-inline-code">/js/portal.js?v=3</code>.
-            Page-specific logic lives in inline <code class="docs-inline-code">&lt;script&gt;</code> tags
-            at the bottom of each file — no build step required.
-          </p>
-        </section>
-
-        <section class="docs-section" id="portal-config">
-          <h2 class="docs-h2">Portal Configuration</h2>
-          <p class="docs-p">
-            The portal reads two runtime values from the environment.
-            At container startup, <code class="docs-inline-code">docker-entrypoint.sh</code> runs
-            <code class="docs-inline-code">envsubst</code> to write
-            <code class="docs-inline-code">/js/config.js?v=3</code> from the template.
-            Every page then imports this file before <code class="docs-inline-code">portal.js</code>.
-          </p>
-          <div class="docs-table-wrap">
-            <table class="docs-table">
-              <thead><tr><th>Env var</th><th>Default</th><th>Purpose</th></tr></thead>
-              <tbody>
-                <tr><td>BACKEND_URL</td><td>http://localhost:8000</td><td>Base URL for all API calls. In docker-compose set to <code>http://backend:8000</code> automatically.</td></tr>
-                <tr><td>BACKEND_API_KEY</td><td><em>empty</em></td><td>Sent as <code>X-API-Key</code> header on all registry and invoke requests.</td></tr>
+                <tr>
+                  <td>DATABASE_URL</td>
+                  <td><strong>Required.</strong> PostgreSQL connection string. Set via <code class="docs-inline-code">.env</code> or your platform dashboard. The database must exist before the application starts — this cannot be configured through the UI.</td>
+                </tr>
+                <tr>
+                  <td>ENCRYPTION_KEY</td>
+                  <td><strong>Required.</strong> Fernet symmetric key used to encrypt secrets at rest. Generate once with:<br><code class="docs-inline-code">python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'</code><br>All services in the same deployment must share the same key. Never change this after initial setup — it will render all stored secrets unreadable.</td>
+                </tr>
               </tbody>
             </table>
           </div>
           <div class="callout callout--warn">
             <span class="callout__icon">⚠</span>
             <div class="callout__body">
-              <strong>The API key is visible in the browser.</strong>
-              The admin portal is an internal tool. Do not expose it to end-users without adding a proper auth layer.
+              <strong>Do not set PORT manually.</strong> Railway, ECS, and Kubernetes inject
+              <code>PORT</code> automatically. Setting it in your environment will conflict
+              with the platform's port binding.
             </div>
           </div>
-        </section>
-
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  AGENT CATALOGUE                                                -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section class="docs-section" id="catalogue-how">
-          <h2 class="docs-h2">How the Catalogue Works</h2>
           <p class="docs-p">
-            On load, <code class="docs-inline-code">/</code> calls
-            <code class="docs-inline-code">GET /api/agents</code> — the orchestrator's public
-            proxy that returns only agents with <strong>published</strong> status.
-            No API key is required for this endpoint.
-          </p>
-          <p class="docs-p">
-            Agents in <strong>draft</strong> or <strong>deprecated</strong> status are invisible
-            to end-users. They are only visible in the admin console
-            (<code class="docs-inline-code">/admin/</code>), which calls
-            <code class="docs-inline-code">GET /api/registry/agents</code> with the API key.
+            After providing these two variables, open the platform URL and the Setup Wizard
+            will guide you through the remaining configuration in under two minutes.
           </p>
         </section>
 
-        <section class="docs-section" id="catalogue-cards">
-          <h2 class="docs-h2">Agent Cards</h2>
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!--  SECTION 2 — USING THE PORTAL                                       -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <section class="docs-section" id="portal">
+          <h2 class="docs-h2">Using the Portal</h2>
           <p class="docs-p">
-            Each card's accent colour is deterministically derived from the agent's
-            <strong>slug</strong> using a simple hash function in
-            <code class="docs-inline-code">portal.js:agentAccentClass()</code>.
-            The same slug always maps to the same colour — consistent across sessions and browsers.
-            There are 8 colour slots: indigo, violet, cyan, emerald, amber, red, pink, teal.
+            The portal has three areas: the <strong>Agent Catalogue</strong> (home page),
+            the <strong>Admin console</strong>, and individual <strong>agent workspaces</strong>.
+            Use the top navigation bar to move between areas.
           </p>
-          <p class="docs-p">
-            The search bar on the catalogue page filters by agent name, slug, and description
-            in real time — no server round-trip.
-          </p>
-        </section>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  CHAT INTERFACE                                                  -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section class="docs-section" id="chat-sessions">
-          <h2 class="docs-h2">Sessions</h2>
-          <p class="docs-p">
-            A <strong>session</strong> is a UUID that groups a sequence of messages for one
-            agent. It is created the first time a user opens
-            <code class="docs-inline-code">/chat.html?agent=slug</code>
-            and persisted in <code class="docs-inline-code">sessionStorage</code> under
-            the key <code class="docs-inline-code">session_{agentSlug}</code>.
-          </p>
-          <p class="docs-p">
-            <code class="docs-inline-code">sessionStorage</code> survives page refreshes within
-            the same browser tab but is cleared when the tab is closed.
-            This means a user can refresh the chat page and resume their conversation;
-            opening a second tab starts a fresh session.
-          </p>
-          <p class="docs-p">
-            Clicking <strong>New Session</strong> generates a new UUID and stores it,
-            effectively forking the conversation.
-            The original session and its messages remain in the database.
-          </p>
-        </section>
-
-        <section class="docs-section" id="chat-streaming">
-          <h2 class="docs-h2">Streaming Responses</h2>
-          <p class="docs-p">
-            The chat page reads the HTTP response body via the
-            <code class="docs-inline-code">ReadableStream</code> API
-            (<code class="docs-inline-code">res.body.getReader()</code>).
-            Currently the backend returns full JSON, so the complete response arrives in
-            one or two network chunks. The portal then replays the text
-            character-by-character with <code class="docs-inline-code">requestAnimationFrame</code>,
-            rendering at ~4 characters per frame (~240 chars/sec at 60 fps).
-          </p>
-          <p class="docs-p">
-            The architecture is ready for real server-sent events: when the backend adds a
-            <code class="docs-inline-code">POST /api/stream/{slug}</code> endpoint, only
-            the response-body parsing block in
-            <code class="docs-inline-code">portal.js:invokeAgent()</code> needs to change.
-          </p>
-          <p class="docs-p">
-            While streaming, the assistant bubble shows a blinking cursor
-            (<code class="docs-inline-code">.msg--assistant.streaming::after</code>).
-            When streaming completes, the raw text is replaced with rendered markdown.
-          </p>
-        </section>
-
-        <section class="docs-section" id="chat-history">
-          <h2 class="docs-h2">History &amp; Persistence</h2>
-          <p class="docs-p">
-            On page load the chat page calls
-            <code class="docs-inline-code">GET /api/session/{sessionId}</code>
-            and renders any existing messages. This means
-            <strong>the full conversation is restored on refresh</strong>,
-            even after the user navigates away and returns.
-          </p>
-          <p class="docs-p">
-            When invoking the agent, the frontend sends
-            <code class="docs-inline-code">history: []</code> in the request body.
-            The backend orchestrator loads the last 40 messages from the database
-            by session ID and passes them to Claude — the UI never needs to replay the full history.
-          </p>
-          <p class="docs-p">
-            Each message is stored in <code class="docs-inline-code">chat_messages</code>
-            with the session UUID, role, content, and token count.
-          </p>
-        </section>
-
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  OPERATOR GUIDE                                                  -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section class="docs-section" id="admin-console">
-          <h2 class="docs-h2">Admin Console</h2>
-          <p class="docs-p">
-            Access the admin console at
-            <a href="/admin/">/admin/</a>.
-            It lists every agent in the registry regardless of status.
-          </p>
-          <h3 class="docs-h3">Lifecycle states</h3>
           <div class="docs-table-wrap">
             <table class="docs-table">
-              <thead><tr><th>Status</th><th>Catalogue</th><th>Invocable</th><th>Transitions</th></tr></thead>
+              <thead><tr><th>Area</th><th>URL</th><th>Purpose</th></tr></thead>
               <tbody>
-                <tr><td>draft</td><td>Hidden</td><td>No</td><td>→ published</td></tr>
-                <tr><td>published</td><td>Visible</td><td>Yes</td><td>→ deprecated</td></tr>
-                <tr><td>deprecated</td><td>Hidden</td><td>No</td><td>Terminal (via UI)</td></tr>
+                <tr><td>/</td><td>Agent Catalogue</td><td>Browse and launch published agents</td></tr>
+                <tr><td>/admin/</td><td>Admin Console</td><td>Manage agent lifecycle; configure platform</td></tr>
+                <tr><td>/chat.html?agent=&lt;slug&gt;</td><td>Chat</td><td>Converse with a specific agent</td></tr>
+                <tr><td>/agents/&lt;slug&gt;/</td><td>Agent workspace</td><td>Agent-specific dashboard, reports, settings</td></tr>
+                <tr><td>/setup.html</td><td>Setup Wizard</td><td>First-run configuration (auto-redirected)</td></tr>
+                <tr><td>/docs/</td><td>Documentation</td><td>This page</td></tr>
               </tbody>
             </table>
           </div>
+
+          <h3 class="docs-h3" id="portal-nav">Navigation</h3>
+          <p class="docs-p">
+            Each agent card on the catalogue shows the agent's name, description, model version,
+            and quick action buttons. Use the search bar to filter agents by name, slug, or
+            description — filtering runs locally with no server round-trip.
+            The catalogue updates automatically when agents are published or deprecated.
+          </p>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!--  SECTION 3 — AGENT CATALOGUE                                        -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <section class="docs-section" id="catalogue">
+          <h2 class="docs-h2">Agent Catalogue</h2>
+          <p class="docs-p">
+            Published agents appear as cards. Each card's accent colour is derived
+            deterministically from the agent's slug — the same agent always shows
+            the same colour across browsers and sessions.
+            The agent count shown top-right of the catalogue updates in real time
+            as agents are published or deprecated.
+          </p>
+
+          <h3 class="docs-h3" id="catalogue-actions">Quick Actions</h3>
+          <div class="docs-table-wrap">
+            <table class="docs-table">
+              <thead><tr><th>Agent</th><th>Available actions</th></tr></thead>
+              <tbody>
+                <tr><td>Alert Analyser</td><td>Chat, Dashboard, Reports, Settings</td></tr>
+                <tr><td>CUR Analyser</td><td>Chat, Dashboard, Reports, Settings</td></tr>
+                <tr><td>Infra Health Check</td><td>Chat, Settings</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="docs-p">
+            Click <strong>Chat</strong> to open the agent's conversation interface.
+            The other buttons open the agent's workspace pages — dashboards display
+            pre-computed analytics, reports show uploaded or synced data sets,
+            and settings control the agent's data source.
+          </p>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!--  SECTION 4 — CHAT INTERFACE                                         -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <section class="docs-section" id="chat">
+          <h2 class="docs-h2">Chat Interface</h2>
+          <p class="docs-p">
+            The left sidebar shows four pieces of information: the agent name,
+            the model currently in use, your session ID, and the current data context —
+            what data the agent is working with and key metrics derived from it.
+          </p>
+          <p class="docs-p">
+            Type your question in the input box at the bottom and press Enter to send.
+            The agent responds with analysis, structured tables, and actionable recommendations.
+            Markdown formatting — headers, bold, code blocks, and tables — is rendered inline.
+          </p>
+          <p class="docs-p">
+            Ask follow-up questions naturally. The agent retains context within a session:
+            you can reference earlier parts of the conversation without repeating background.
+          </p>
+
+          <h3 class="docs-h3" id="chat-sessions">Sessions</h3>
+          <p class="docs-p">
+            Click <strong>New Session</strong> in the sidebar to start a fresh conversation.
+            The previous session is preserved in the database and can be resumed by navigating
+            back with the same session ID. Sessions are identified by a UUID stored in
+            <code class="docs-inline-code">sessionStorage</code> — refreshing the page
+            resumes the same session; closing the tab and reopening starts a new one.
+          </p>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!--  SECTION 5 — OPERATOR GUIDE                                         -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <section class="docs-section" id="operator">
+          <h2 class="docs-h2">Operator Guide</h2>
+          <p class="docs-p">
+            Operators manage the platform via the <strong>Admin</strong> link in the top bar.
+            The admin console has two tabs: <strong>Agents</strong> and <strong>Platform</strong>.
+          </p>
+
+          <h3 class="docs-h3">Agents Tab</h3>
+          <p class="docs-p">
+            Lists all registered agents with status filters: All, Draft, Published, Deprecated.
+          </p>
+          <ul class="docs-ul">
+            <li class="docs-li"><strong>Deprecate</strong> — removes an agent from the catalogue without deleting its registration or chat history. The agent moves to the Deprecated tab and can be re-published at any time.</li>
+            <li class="docs-li"><strong>+ Register Agent</strong> — opens the registration form. Fill in the name, slug, description, invoke URL, and model. The agent starts in Draft status.</li>
+            <li class="docs-li"><strong>Publish</strong> — makes a Draft agent live in the catalogue immediately.</li>
+          </ul>
+
           <div class="callout callout--note">
             <span class="callout__icon">📋</span>
             <div class="callout__body">
-              Every <code class="docs-inline-code">PUT /api/registry/agents/{id}</code> call
-              automatically snapshots the current config into
-              <code class="docs-inline-code">agent_versions</code> before applying changes.
-              You can inspect the version history via
-              <code class="docs-inline-code">GET /api/registry/agents/{id}/versions</code>.
+              The slug is the permanent identifier for an agent. It is used in URLs,
+              the invoke path, and the database. Choose it carefully — changing it after
+              registration requires re-registering the agent and migrating any stored sessions.
             </div>
           </div>
 
-          <h3 class="docs-h3">Register form</h3>
+          <h3 class="docs-h3" id="operator-platform">Platform Tab</h3>
           <p class="docs-p">
-            The <a href="/admin/register.html">register form</a> at
-            <code class="docs-inline-code">/admin/register.html</code> auto-generates the
-            slug from the agent name as you type. After registration you can publish
-            immediately using the "Publish now" button that appears in the success panel.
+            The Platform tab shows the current state of the backend configuration:
+          </p>
+          <ul class="docs-ul">
+            <li class="docs-li"><strong>Anthropic API</strong> — shows <em>Connected</em> if the API key is present and valid, <em>Not configured</em> if missing.</li>
+            <li class="docs-li"><strong>Model in use</strong> — the Claude model used for direct invocations.</li>
+            <li class="docs-li"><strong>Published agents</strong> — count of agents currently visible in the catalogue.</li>
+            <li class="docs-li"><strong>Platform version</strong> — the backend release version.</li>
+          </ul>
+          <p class="docs-p">
+            The <strong>Test Connection</strong> button in the Edit Platform Config section
+            tests a new Anthropic API key without saving it. Changes made here apply
+            immediately — the backend cache is updated in memory without requiring a redeployment.
           </p>
         </section>
 
-        <section class="docs-section" id="env-vars">
-          <h2 class="docs-h2">Environment Variables</h2>
-          <h3 class="docs-h3">Backend</h3>
-          <div class="docs-table-wrap">
-            <table class="docs-table">
-              <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>DATABASE_URL</td><td><strong>Yes</strong></td><td>asyncpg DSN — <code>postgresql+asyncpg://user:pass@host/db</code></td></tr>
-                <tr><td>ANTHROPIC_API_KEY</td><td><strong>Yes</strong></td><td>Key for direct-invoke agents (those without an <code>invoke_url</code>)</td></tr>
-                <tr><td>BACKEND_API_KEY</td><td><strong>Yes</strong></td><td>Shared secret. Sent as <code>X-API-Key</code> by portal and agents</td></tr>
-                <tr><td>SECRET_KEY</td><td><strong>Yes</strong></td><td>64-char hex — generate with <code>python -c "import secrets; print(secrets.token_hex(32))"</code></td></tr>
-                <tr><td>CORS_ORIGINS</td><td>No</td><td>Comma-separated allowed origins. Default: <code>http://localhost:3000</code></td></tr>
-                <tr><td>BACKEND_PORT</td><td>No</td><td>Bind port. Default: <code>8000</code></td></tr>
-              </tbody>
-            </table>
-          </div>
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!--  SECTION 6 — AGENT SETTINGS                                         -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <section class="docs-section" id="settings">
+          <h2 class="docs-h2">Agent Settings</h2>
+          <p class="docs-p">
+            Each agent has a Settings page accessible from its card (Settings button)
+            or from the sub-navigation bar within the agent workspace.
+            Settings are stored encrypted in the database and survive restarts —
+            there is no need to reconfigure after upgrades or redeployments.
+          </p>
 
-          <h3 class="docs-h3">Portal</h3>
-          <div class="docs-table-wrap">
-            <table class="docs-table">
-              <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>BACKEND_URL</td><td><strong>Yes</strong></td><td>Base URL the portal JS uses to reach the backend. In docker-compose: <code>http://backend:8000</code></td></tr>
-                <tr><td>BACKEND_API_KEY</td><td><strong>Yes</strong></td><td>Injected into <code>/js/config.js?v=3</code> at container startup</td></tr>
-                <tr><td>PORTAL_PORT</td><td>No</td><td>Host-side port binding in docker-compose. Default: <code>3000</code></td></tr>
-              </tbody>
-            </table>
-          </div>
+          <h3 class="docs-h3" id="settings-alert">Alert Analyser</h3>
+          <p class="docs-p">Choose the source for alert data:</p>
+          <ul class="docs-ul">
+            <li class="docs-li"><strong>File Upload</strong> — upload a CSV or JSON export from OpsGenie via the Reports page. The file is parsed on upload and stored in memory for the session.</li>
+            <li class="docs-li"><strong>OpsGenie / JSM API</strong> — enter your Cloud ID, email address, and API token. The agent calls the JSM Ops API directly and retrieves the last 100 alerts. Click <strong>Save &amp; Sync</strong> to pull data immediately. Subsequent syncs can be triggered from the Settings page at any time.</li>
+            <li class="docs-li"><strong>Synthetic Data</strong> — generates a realistic set of OpsGenie-formatted alerts for demonstration. No credentials required.</li>
+          </ul>
+          <p class="docs-p">
+            Credentials (API token, Cloud ID) are encrypted using the deployment's
+            <code class="docs-inline-code">ENCRYPTION_KEY</code> before being written
+            to the database. They are decrypted in memory at runtime and never returned
+            to the browser.
+          </p>
 
-          <h3 class="docs-h3">Per-agent</h3>
-          <div class="docs-table-wrap">
-            <table class="docs-table">
-              <thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>ANTHROPIC_API_KEY</td><td><strong>Yes</strong></td><td>The agent's own key (can share the platform key or use a separate one)</td></tr>
-                <tr><td>MODEL</td><td>No</td><td>Claude model to use. Default: <code>claude-sonnet-4-6</code></td></tr>
-                <tr><td>AGENT_ID</td><td><strong>Yes</strong></td><td>Stable UUID — generate once with <code>uuidgen</code>, never regenerate</td></tr>
-                <tr><td>AGENT_SLUG</td><td><strong>Yes</strong></td><td>Matches the slug registered in the backend</td></tr>
-                <tr><td>AGENT_NAME</td><td><strong>Yes</strong></td><td>Human-readable name</td></tr>
-                <tr><td>AGENT_SYSTEM_PROMPT</td><td>No</td><td>Full system prompt. Change without rebuilding the image</td></tr>
-              </tbody>
-            </table>
-          </div>
+          <h3 class="docs-h3" id="settings-cur">CUR Analyser</h3>
+          <p class="docs-p">Choose the source for AWS cost data:</p>
+          <ul class="docs-ul">
+            <li class="docs-li"><strong>File Upload</strong> — upload an AWS Cost and Usage Report CSV export via the Reports page. The file must use the standard CUR column schema.</li>
+            <li class="docs-li"><strong>Synthetic Data</strong> — auto-generates a realistic CUR dataset with multiple services, regions, and accounts. No AWS credentials required.</li>
+          </ul>
+          <p class="docs-p">
+            AWS Cost Explorer API integration is planned for Phase 2. For now, export your
+            CUR data from the AWS Billing console and upload it via the Reports page.
+          </p>
+
+          <h3 class="docs-h3" id="settings-infra">Infra Health Check</h3>
+          <p class="docs-p">
+            The Settings page for Infra Health Check is read-only. It shows the agent's
+            current health status, model version, and invoke URL. No configuration is required —
+            the agent's health data is built in, covering five services:
+            api-server, database, cache, queue, and cdn.
+          </p>
         </section>
 
-        <section class="docs-section" id="deployment">
-          <h2 class="docs-h2">Deployment</h2>
-          <h3 class="docs-h3">Local — Docker Compose</h3>
-          <div class="docs-code-block">
-            <div class="docs-code-block__bar">
-              <span class="docs-code-block__lang">bash</span>
-              <button class="docs-code-block__copy">Copy</button>
-            </div>
-            <pre><code>make dev        # docker compose up --build (postgres + backend)
-make migrate    # alembic upgrade head
-make logs       # docker compose logs -f
-make test       # pytest inside the backend container</code></pre>
-          </div>
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!--  SECTION 7 — CLIENT DELIVERY & DEPLOYMENT                           -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <section class="docs-section" id="delivery">
+          <h2 class="docs-h2">Client Delivery &amp; Deployment</h2>
           <p class="docs-p">
-            The portal is not included in the default <code class="docs-inline-code">make dev</code>
-            target to keep the inner dev loop fast. To run it:
+            AgentsIQ agents are delivered as standalone plugin repositories.
+            Each plugin is self-contained and deployable on any platform that runs Docker —
+            Railway, ECS, Fly.io, or a bare VM with Docker Compose.
           </p>
-          <div class="docs-code-block">
-            <div class="docs-code-block__bar">
-              <span class="docs-code-block__lang">bash</span>
-              <button class="docs-code-block__copy">Copy</button>
-            </div>
-            <pre><code>docker compose up portal     # or open portal/index.html directly in a browser</code></pre>
+
+          <h3 class="docs-h3" id="delivery-envvars">Required Environment Variables</h3>
+          <p class="docs-p">
+            Only two variables must be set before the application starts. Everything else
+            is configured through the Setup Wizard or agent Settings pages.
+          </p>
+          <div class="docs-table-wrap">
+            <table class="docs-table">
+              <thead><tr><th>Variable</th><th>Set via</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>DATABASE_URL</td>
+                  <td><code class="docs-inline-code">.env</code> or platform dashboard</td>
+                  <td>PostgreSQL connection string. The database must exist before startup. Cannot be set through the UI.</td>
+                </tr>
+                <tr>
+                  <td>ENCRYPTION_KEY</td>
+                  <td><code class="docs-inline-code">.env</code> or platform dashboard</td>
+                  <td>All services must share the same key. Generate once — never rotate after data has been written.</td>
+                </tr>
+                <tr>
+                  <td>PORT</td>
+                  <td>Auto-injected</td>
+                  <td>Never set manually. Railway, ECS, and Kubernetes inject this at runtime.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          <h3 class="docs-h3">Production — Railway</h3>
+          <p class="docs-p">The following are configured through the UI after first start:</p>
+          <ul class="docs-ul">
+            <li class="docs-li"><strong>Anthropic API Key</strong> — entered in Setup Wizard Step 1, stored encrypted in the <code class="docs-inline-code">platform_config</code> table.</li>
+            <li class="docs-li"><strong>Platform API Key</strong> — auto-generated in Setup Wizard Step 2, stored encrypted in the <code class="docs-inline-code">platform_config</code> table. This key secures all communication between the portal and the backend API — every portal request includes it as an <code class="docs-inline-code">X-API-Key</code> header. Users never interact with it directly. <strong>Important:</strong> after changing the Platform API Key via the Setup Wizard, also update the <code class="docs-inline-code">BACKEND_API_KEY</code> environment variable in your portal service so the portal uses the new key. This limitation will be resolved in a future release when the portal reads its API key directly from the database.</li>
+            <li class="docs-li"><strong>OpsGenie credentials</strong> — entered in Alert Analyser Settings, stored encrypted in the agent's <code class="docs-inline-code">agent_config</code> table.</li>
+            <li class="docs-li"><strong>Data source preferences</strong> — configured per agent in their respective Settings pages.</li>
+          </ul>
+
+          <h3 class="docs-h3" id="delivery-steps">Deployment Steps</h3>
           <div class="steps">
             <div class="step">
               <div class="step__num">1</div>
               <div class="step__body">
-                <div class="step__title">Create a Railway project and add a PostgreSQL plugin</div>
-                <div class="step__desc">Railway provides <code>DATABASE_URL</code> automatically to services that link to the plugin.</div>
+                <div class="step__title">Clone the agent repository</div>
+                <div class="step__desc">Each agent is delivered as a standalone repo. Clone it to your deployment environment.</div>
               </div>
             </div>
             <div class="step">
               <div class="step__num">2</div>
               <div class="step__body">
-                <div class="step__title">Add the backend service</div>
-                <div class="step__desc">
-                  Point it at the repo root, set Dockerfile path to
-                  <code class="docs-inline-code">backend/Dockerfile</code>.
-                  Set env vars: <code>ANTHROPIC_API_KEY</code>, <code>BACKEND_API_KEY</code>,
-                  <code>SECRET_KEY</code>, <code>CORS_ORIGINS</code>.
-                </div>
+                <div class="step__title">Copy <code class="docs-inline-code">.env.example</code> to <code class="docs-inline-code">.env</code></div>
+                <div class="step__desc">The example file documents every variable. You only need to fill in two.</div>
               </div>
             </div>
             <div class="step">
               <div class="step__num">3</div>
               <div class="step__body">
-                <div class="step__title">Run migrations</div>
-                <div class="step__desc">
-                  In Railway's service shell or as a deploy command:
-                  <code class="docs-inline-code">alembic upgrade head</code>
-                </div>
+                <div class="step__title">Set <code class="docs-inline-code">DATABASE_URL</code> and <code class="docs-inline-code">ENCRYPTION_KEY</code></div>
+                <div class="step__desc">These are the only variables that cannot be set through the UI. Generate the encryption key with the command documented in <code class="docs-inline-code">.env.example</code>.</div>
               </div>
             </div>
             <div class="step">
               <div class="step__num">4</div>
               <div class="step__body">
-                <div class="step__title">Add the portal service</div>
-                <div class="step__desc">
-                  Dockerfile: <code class="docs-inline-code">portal/Dockerfile</code>, context: repo root.
-                  Set <code>BACKEND_URL</code> to the backend's Railway URL and <code>BACKEND_API_KEY</code>.
-                </div>
+                <div class="step__title">Run <code class="docs-inline-code">docker compose up</code></div>
+                <div class="step__desc">Starts all services. The backend creates the database schema automatically on first start.</div>
               </div>
             </div>
             <div class="step">
               <div class="step__num">5</div>
               <div class="step__body">
-                <div class="step__title">Add each agent service</div>
-                <div class="step__desc">
-                  One Railway service per agent, pointing at
-                  <code class="docs-inline-code">agents/&lt;slug&gt;/Dockerfile</code>.
-                  Set the five <code>AGENT_*</code> env vars per service.
-                  Then register + publish the agent via the admin console or curl.
-                </div>
+                <div class="step__title">Open the portal in your browser</div>
+                <div class="step__desc">The platform detects that no Anthropic key is configured and redirects automatically to the Setup Wizard.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step__num">6</div>
+              <div class="step__body">
+                <div class="step__title">Complete the Setup Wizard</div>
+                <div class="step__desc">Takes approximately two minutes. Enter and test your Anthropic API key, then copy the auto-generated Platform API Key. Both are saved encrypted to the database.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step__num">7</div>
+              <div class="step__body">
+                <div class="step__title">Configure each agent's data source</div>
+                <div class="step__desc">Go to each agent's Settings page and select your data source. For Alert Analyser with OpsGenie, enter your Cloud ID, email, and API token, then click Save &amp; Sync.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step__num">8</div>
+              <div class="step__body">
+                <div class="step__title">Data is live</div>
+                <div class="step__desc">The agent populates its dashboard and is ready to answer questions. Open the catalogue and click Chat.</div>
               </div>
             </div>
           </div>
-        </section>
 
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  CLIENT DELIVERY GUIDE                                           -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section class="docs-section" id="client-what">
-          <h2 class="docs-h2">What Clients Receive</h2>
-          <p class="docs-p">
-            Each client engagement delivers a <strong>standalone agent repo</strong>
-            — a copy of <code class="docs-inline-code">agents/agent-template/</code>
-            customised for their domain. The repo contains everything needed to run the
-            agent independently; it has no dependency on the monorepo's
-            <code class="docs-inline-code">shared/</code> package.
-          </p>
-          <div class="docs-table-wrap">
-            <table class="docs-table">
-              <thead><tr><th>File</th><th>Purpose</th></tr></thead>
-              <tbody>
-                <tr><td>main.py</td><td>FastAPI app — <code>/health</code> and <code>/invoke</code> endpoints</td></tr>
-                <tr><td>agent.py</td><td>Stateless <code>AgentRunner</code> — Claude call + tool-use loop</td></tr>
-                <tr><td>config.py</td><td>All settings from env vars (pydantic-settings)</td></tr>
-                <tr><td>tools/base.py</td><td><code>ToolExecutor</code> ABC — subclass for every tool</td></tr>
-                <tr><td>tools/echo.py</td><td>Example tool — returns input unchanged</td></tr>
-                <tr><td>manifest.json</td><td>Agent descriptor — filled in before registration</td></tr>
-                <tr><td>Dockerfile</td><td>python:3.11-slim; <code>${PORT:-8001}</code> for Railway</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="docs-p">
-            The system prompt is entirely configured via the
-            <code class="docs-inline-code">AGENT_SYSTEM_PROMPT</code> env var.
-            Clients can tune behaviour on Railway without rebuilding the image.
-          </p>
-        </section>
-
-        <section class="docs-section" id="client-setup">
-          <h2 class="docs-h2">Setting Up a New Agent</h2>
-          <div class="docs-code-block">
-            <div class="docs-code-block__bar">
-              <span class="docs-code-block__lang">bash</span>
-              <button class="docs-code-block__copy">Copy</button>
+          <div class="callout callout--tip">
+            <span class="callout__icon">💡</span>
+            <div class="callout__body">
+              To register a new agent with the platform, click <strong>+ Register Agent</strong>
+              in the Admin console and fill in the manifest details.
+              No API calls, no file editing, no restarts required.
             </div>
-            <pre><code># 1. Copy the template
-cp -r agents/agent-template agents/my-agent
-cd agents/my-agent
-
-# 2. Configure
-cp .env.example .env
-# Edit .env: set ANTHROPIC_API_KEY, AGENT_ID, AGENT_SLUG, AGENT_NAME, AGENT_SYSTEM_PROMPT
-
-# 3. Update manifest.json — fill in name, slug, description, invoke_url
-
-# 4. Run locally
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8001
-
-# 5. Test
-curl http://localhost:8001/health
-curl -s -X POST http://localhost:8001/invoke \
-  -H "Content-Type: application/json" \
-  -d '{"session_id":"test-uuid","user_message":"Hello","context":{},"history":[]}'</code></pre>
           </div>
-          <p class="docs-p">
-            To add a domain-specific tool, create
-            <code class="docs-inline-code">tools/my_tool.py</code>
-            subclassing <code class="docs-inline-code">ToolExecutor</code>,
-            then register it in <code class="docs-inline-code">main.py</code>:
-          </p>
-          <div class="docs-code-block">
-            <div class="docs-code-block__bar">
-              <span class="docs-code-block__lang">python</span>
-              <button class="docs-code-block__copy">Copy</button>
-            </div>
-            <pre><code>from tools.my_tool import MyTool
-_runner = AgentRunner(tools=[MyTool()])   # add or remove tools here</code></pre>
-          </div>
+
+          <h3 class="docs-h3" id="delivery-limitations">Known Limitations</h3>
+          <ul class="docs-ul">
+            <li class="docs-li"><strong>Platform API Key changes require a manual env var update.</strong> After changing the Platform API Key via the Setup Wizard, you must also update the <code class="docs-inline-code">BACKEND_API_KEY</code> environment variable in your portal service and redeploy it. The portal currently reads its API key from the env var at startup, not from the database.</li>
+            <li class="docs-li"><strong>Agent configuration requires <code class="docs-inline-code">DATABASE_URL</code> for persistence.</strong> If an agent container restarts without <code class="docs-inline-code">DATABASE_URL</code> configured, any previously saved settings (OpsGenie credentials, data source preference) will not be restored.</li>
+            <li class="docs-li"><strong>No scheduled auto-sync.</strong> Alert data must be manually synced via the Alert Analyser Settings page. Automatic scheduled sync is planned for Phase 2.</li>
+            <li class="docs-li"><strong>AWS Cost Explorer API integration is planned for Phase 2.</strong> CUR data must currently be exported from the AWS Billing console and uploaded manually via the Reports page.</li>
+          </ul>
         </section>
 
-        <section class="docs-section" id="client-register">
-          <h2 class="docs-h2">Registering with the Platform</h2>
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!--  SECTION 8 — AGENT DEVELOPMENT                                      -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <section class="docs-section" id="dev">
+          <h2 class="docs-h2">Agent Development</h2>
           <p class="docs-p">
-            Once the agent is deployed and its <code class="docs-inline-code">/health</code>
-            endpoint is reachable from the backend, register it and publish it:
+            Build a new agent by copying the
+            <code class="docs-inline-code">agents/agent-template/</code> folder.
+            The template is self-contained — it has no dependency on the monorepo's
+            <code class="docs-inline-code">shared/</code> package and can be extracted
+            and delivered as a standalone repository to clients.
           </p>
-          <div class="docs-code-block">
-            <div class="docs-code-block__bar">
-              <span class="docs-code-block__lang">bash</span>
-              <button class="docs-code-block__copy">Copy</button>
-            </div>
-            <pre><code>PLATFORM=https://your-backend.railway.app
-KEY=your-backend-api-key
 
-# Register (uses manifest.json)
-AGENT_ID=$(curl -s -X POST $PLATFORM/api/registry/agents \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: $KEY" \
-  -d @manifest.json | jq -r .id)
-
-echo "Registered: $AGENT_ID"
-
-# Publish
-curl -s -X POST $PLATFORM/api/registry/agents/$AGENT_ID/publish \
-  -H "X-API-Key: $KEY" | jq .status</code></pre>
-          </div>
+          <h3 class="docs-h3" id="dev-contract">Invoke Contract</h3>
           <p class="docs-p">
-            The agent now appears in the catalogue and is invocable at
-            <code class="docs-inline-code">POST /api/invoke/{slug}</code>.
-          </p>
-        </section>
-
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!--  AGENT DEVELOPMENT                                               -->
-        <!-- ═══════════════════════════════════════════════════════════════ -->
-        <section class="docs-section" id="dev-contract">
-          <h2 class="docs-h2">Invoke Contract</h2>
-          <p class="docs-p">
-            Every agent must expose exactly two HTTP endpoints:
+            Every agent exposes exactly two HTTP endpoints:
           </p>
           <div class="docs-table-wrap">
             <table class="docs-table">
               <thead><tr><th>Method + Path</th><th>Description</th><th>Auth</th></tr></thead>
               <tbody>
-                <tr><td>GET /health</td><td>Returns <code>{"status":"ok","agent":"&lt;slug&gt;"}</code></td><td>None</td></tr>
-                <tr><td>POST /invoke</td><td>Accepts <code>InvokeRequest</code>, returns <code>InvokeResponse</code></td><td>None (backend handles auth)</td></tr>
+                <tr><td>GET /health</td><td>Returns <code class="docs-inline-code">{"status":"ok","agent":"&lt;slug&gt;"}</code></td><td>None</td></tr>
+                <tr><td>POST /invoke</td><td>Accepts <code class="docs-inline-code">InvokeRequest</code>, returns <code class="docs-inline-code">InvokeResponse</code></td><td>None (backend handles auth)</td></tr>
               </tbody>
             </table>
           </div>
-          <p class="docs-p">
-            The backend orchestrator calls the agent's
-            <code class="docs-inline-code">/invoke</code> endpoint when it has an
-            <code class="docs-inline-code">invoke_url</code>.
-            Agents with no <code class="docs-inline-code">invoke_url</code> are called
-            directly by the orchestrator via the Anthropic SDK using the config stored in the registry.
-          </p>
-        </section>
 
-        <section class="docs-section" id="dev-schemas">
-          <h2 class="docs-h2">Request &amp; Response Schemas</h2>
-          <h3 class="docs-h3">InvokeRequest — POST /invoke body</h3>
+          <p class="docs-p">
+            The <code class="docs-inline-code">POST /invoke</code> body:
+          </p>
           <div class="schema">
             <div class="schema__title">InvokeRequest</div>
             <div class="schema__row">
@@ -902,175 +708,121 @@ curl -s -X POST $PLATFORM/api/registry/agents/$AGENT_ID/publish \
             <div class="schema__row">
               <div class="schema__field">context</div>
               <div class="schema__type">dict</div>
-              <div class="schema__desc"><span class="schema__opt">optional</span> — Arbitrary key-value context injected into the system prompt. Use for tenant, environment, or domain data.</div>
+              <div class="schema__desc"><span class="schema__opt">optional</span> — Arbitrary key-value pairs injected into the system prompt. Use for tenant data, loaded report content, or session metadata.</div>
             </div>
             <div class="schema__row">
               <div class="schema__field">history</div>
               <div class="schema__type">list</div>
-              <div class="schema__desc"><span class="schema__opt">optional</span> — Previous messages as <code>[{"role":"user"|"assistant","content":"..."}]</code>. The orchestrator loads DB history automatically; standalone agents use this field.</div>
-            </div>
-          </div>
-
-          <h3 class="docs-h3">InvokeResponse — /invoke response body</h3>
-          <div class="schema">
-            <div class="schema__title">InvokeResponse</div>
-            <div class="schema__row">
-              <div class="schema__field">session_id</div>
-              <div class="schema__type">string</div>
-              <div class="schema__desc">Echo of the request's session_id.</div>
-            </div>
-            <div class="schema__row">
-              <div class="schema__field">response</div>
-              <div class="schema__type">string</div>
-              <div class="schema__desc">The assistant's reply text.</div>
-            </div>
-            <div class="schema__row">
-              <div class="schema__field">metadata</div>
-              <div class="schema__type">dict</div>
-              <div class="schema__desc">Arbitrary. The template returns <code>{"tokens_used": N}</code>.</div>
-            </div>
-          </div>
-
-          <div class="docs-code-block">
-            <div class="docs-code-block__bar">
-              <span class="docs-code-block__lang">json — example invoke pair</span>
-              <button class="docs-code-block__copy">Copy</button>
-            </div>
-            <pre><code>// Request
-{
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "user_message": "What is the root cause of this alert?",
-  "context": { "environment": "production", "region": "us-east-1" },
-  "history": []
-}
-
-// Response
-{
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
-  "response": "Based on the alert details, the root cause appears to be…",
-  "metadata": { "tokens_used": 312 }
-}</code></pre>
-          </div>
-        </section>
-
-        <section class="docs-section" id="dev-stateless">
-          <h2 class="docs-h2">Stateless Rule</h2>
-          <div class="callout callout--rule">
-            <span class="callout__icon">⛔</span>
-            <div class="callout__body">
-              <strong>Agents must not store state between requests.</strong>
-              No in-memory session dictionaries, no database writes from the agent,
-              no file system state. Every request must be fully self-contained.
-              All context arrives through <code>context</code> and <code>history</code>.
+              <div class="schema__desc"><span class="schema__opt">optional</span> — Previous messages as <code>[{"role":"user"|"assistant","content":"..."}]</code>. The orchestrator loads DB history automatically; standalone agents use this field directly.</div>
             </div>
           </div>
           <p class="docs-p">
-            The platform provides session persistence via the backend's
-            <code class="docs-inline-code">chat_messages</code> table.
-            The orchestrator loads history from the database on every invocation and
-            forwards it to the agent. Agents should never need their own storage.
+            The response must contain a <code class="docs-inline-code">response</code> string
+            and a <code class="docs-inline-code">metadata</code> dict. The template returns
+            <code class="docs-inline-code">{"tokens_used": N}</code> in metadata.
           </p>
-        </section>
 
-        <section class="docs-section" id="dev-tools">
-          <h2 class="docs-h2">Tool Use</h2>
+          <h3 class="docs-h3" id="dev-tools">Tools</h3>
           <p class="docs-p">
-            Agents can expose tools to Claude using Anthropic's tool-use API.
-            The <code class="docs-inline-code">AgentRunner</code> in
-            <code class="docs-inline-code">agent.py</code> handles the multi-turn tool loop
-            automatically — you only write the <code class="docs-inline-code">execute()</code> method.
+            Define tools in the <code class="docs-inline-code">tools/</code> folder by
+            subclassing <code class="docs-inline-code">ToolExecutor</code>:
           </p>
-          <h3 class="docs-h3">Creating a tool</h3>
           <div class="docs-code-block">
             <div class="docs-code-block__bar">
-              <span class="docs-code-block__lang">python — tools/my_lookup.py</span>
+              <span class="docs-code-block__lang">python — tools/my_tool.py</span>
               <button class="docs-code-block__copy">Copy</button>
             </div>
             <pre><code>from typing import Any
 from tools.base import ToolExecutor
 
-class AlertLookupTool(ToolExecutor):
-    name = "alert_lookup"
-    description = "Fetches alert details from PagerDuty by alert ID."
+class MyTool(ToolExecutor):
+    name = "my_tool"
+    description = "What this tool does, written for Claude to understand."
     input_schema = {
         "type": "object",
         "properties": {
-            "alert_id": {
-                "type": "string",
-                "description": "The PagerDuty alert identifier.",
-            }
+            "query": {"type": "string", "description": "The input to process."}
         },
-        "required": ["alert_id"],
+        "required": ["query"],
     }
 
     async def execute(self, **kwargs: Any) -> str:
-        alert_id = kwargs["alert_id"]
-        # ... call PagerDuty API ...
-        return f"Alert {alert_id}: CPU spike on prod-web-01, started 14:32 UTC"</code></pre>
+        query = kwargs["query"]
+        # ... perform work ...
+        return "Result as a plain string."</code></pre>
           </div>
-          <h3 class="docs-h3">Registering tools</h3>
+          <p class="docs-p">
+            Register tools in <code class="docs-inline-code">main.py</code>:
+          </p>
           <div class="docs-code-block">
             <div class="docs-code-block__bar">
               <span class="docs-code-block__lang">python — main.py</span>
               <button class="docs-code-block__copy">Copy</button>
             </div>
-            <pre><code>from tools.alert_lookup import AlertLookupTool
-from tools.runbook_search import RunbookSearchTool
-
-_runner = AgentRunner(tools=[AlertLookupTool(), RunbookSearchTool()])</code></pre>
+            <pre><code>from tools.my_tool import MyTool
+_runner = AgentRunner(tools=[MyTool()])</code></pre>
           </div>
           <p class="docs-p">
-            <code class="docs-inline-code">AgentRunner.run()</code> automatically
-            loops until Claude returns <code class="docs-inline-code">stop_reason == "end_turn"</code>,
-            executing each tool call and appending the result before the next Claude turn.
-            Tool errors are caught and returned to Claude as error strings — Claude then
-            decides how to respond.
+            <code class="docs-inline-code">AgentRunner</code> handles the multi-turn tool loop
+            automatically. It runs until Claude returns <code class="docs-inline-code">stop_reason == "end_turn"</code>,
+            executing each tool call and appending results before the next Claude turn.
           </p>
-          <p class="docs-p">
-            To disable tool use entirely, pass an empty list:
-            <code class="docs-inline-code">AgentRunner(tools=[])</code>.
-          </p>
-        </section>
 
-        <section class="docs-section" id="dev-template">
-          <h2 class="docs-h2">Agent Template</h2>
+          <h3 class="docs-h3" id="dev-config">Config Persistence</h3>
           <p class="docs-p">
-            The canonical starting point for every new agent lives at
-            <code class="docs-inline-code">agents/agent-template/</code>.
+            Add settings persistence using the <code class="docs-inline-code">agent_config</code>
+            database pattern — see <code class="docs-inline-code">alert-analyser</code> for
+            the reference implementation:
+            <code class="docs-inline-code">models.py</code> defines the
+            <code class="docs-inline-code">agent_config</code> table,
+            <code class="docs-inline-code">database.py</code> creates the async engine from
+            <code class="docs-inline-code">DATABASE_URL</code>, and
+            <code class="docs-inline-code">routes_settings.py</code> exposes
+            <code class="docs-inline-code">GET /settings</code> and
+            <code class="docs-inline-code">POST /settings</code>.
           </p>
-          <div class="docs-code-block">
-            <div class="docs-code-block__bar">
-              <span class="docs-code-block__lang">text — template layout</span>
-              <button class="docs-code-block__copy">Copy</button>
-            </div>
-            <pre><code>agents/agent-template/
-├── main.py          FastAPI app — /health and /invoke
-├── agent.py         AgentRunner — stateless, handles tool-use loop
-├── config.py        pydantic-settings — reads all env vars
-├── tools/
-│   ├── base.py      ToolExecutor ABC — subclass for every tool
-│   └── echo.py      Example: returns input unchanged
-├── manifest.json    Descriptor — fill in before registration
-├── Dockerfile       python:3.11-slim, PORT env var for Railway
-├── requirements.txt 5 pinned dependencies
-├── .env.example     All vars with descriptions
-└── README.md        7-step guide to using the template</code></pre>
-          </div>
           <p class="docs-p">
-            The template is <strong>self-contained</strong>: it imports nothing from the
-            monorepo's <code class="docs-inline-code">shared/</code> package.
-            Inline <code class="docs-inline-code">InvokeRequest</code> and
-            <code class="docs-inline-code">InvokeResponse</code> Pydantic models in
-            <code class="docs-inline-code">main.py</code> mirror the shared schemas.
-            This allows the agent to be extracted and delivered as a standalone repo
-            to clients without any monorepo dependency.
+            All secrets written through the Settings page are encrypted at rest
+            using the deployment's shared <code class="docs-inline-code">ENCRYPTION_KEY</code>.
+            The <code class="docs-inline-code">encryption.py</code> module in each agent
+            handles encrypt/decrypt transparently — use
+            <code class="docs-inline-code">is_secret_key(key)</code> to determine which
+            fields to encrypt before writing and decrypt after reading.
           </p>
-          <div class="callout callout--tip">
-            <span class="callout__icon">💡</span>
+          <p class="docs-p">
+            Declare your agent's configuration requirements in
+            <code class="docs-inline-code">manifest.json</code> — the platform reads this
+            file during registration. Agents with a <code class="docs-inline-code">DATABASE_URL</code>
+            listed in <code class="docs-inline-code">env</code> will have their
+            <code class="docs-inline-code">agent_config</code> table created automatically
+            on first startup.
+          </p>
+
+          <h3 class="docs-h3" id="dev-register">Self-Registration</h3>
+          <p class="docs-p">
+            If <code class="docs-inline-code">REGISTRY_URL</code> and
+            <code class="docs-inline-code">BACKEND_API_KEY</code> are set, the agent
+            calls <code class="docs-inline-code">POST /api/registry/agents</code> on startup,
+            resolves any 409 conflict by slug lookup, and publishes itself automatically.
+            On Railway, set these two variables to the backend's public URL and API key —
+            the agent will appear in the catalogue the first time it boots.
+          </p>
+          <p class="docs-p">
+            Alternatively, register manually via the Admin console
+            <strong>+ Register Agent</strong> button. Fill in the manifest details and
+            click <strong>Publish now</strong> — the agent appears in the catalogue immediately.
+          </p>
+
+          <div class="callout callout--rule">
+            <span class="callout__icon">⛔</span>
             <div class="callout__body">
-              See <code class="docs-inline-code">agents/agent-template/README.md</code>
-              for the complete 7-step guide to creating and registering a new agent,
-              including curl examples for every step.
+              <strong>Agents must be stateless.</strong>
+              No in-memory session dictionaries, no file system writes, no database state
+              beyond the <code>agent_config</code> settings table.
+              Every request must be fully self-contained — all conversational context
+              arrives through <code>context</code> and <code>history</code>.
+              The platform's <code>chat_messages</code> table provides session persistence;
+              agents should never need their own.
             </div>
           </div>
         </section>
@@ -1082,7 +834,7 @@ _runner = AgentRunner(tools=[AlertLookupTool(), RunbookSearchTool()])</code></pr
 
   <script>
     // ── Active link tracking via IntersectionObserver ────────────────────────
-    const links   = document.querySelectorAll('.docs-nav-link');
+    const links    = document.querySelectorAll('.docs-nav-link');
     const sections = document.querySelectorAll('section[id]');
 
     const io = new IntersectionObserver(entries => {
@@ -1092,7 +844,6 @@ _runner = AgentRunner(tools=[AlertLookupTool(), RunbookSearchTool()])</code></pr
         const active = document.querySelector(`.docs-nav-link[href="#${entry.target.id}"]`);
         if (active) {
           active.classList.add('active');
-          // Also activate parent section link if this is a sub-item
           active.scrollIntoView({ block: 'nearest' });
         }
       });
@@ -1107,7 +858,7 @@ _runner = AgentRunner(tools=[AlertLookupTool(), RunbookSearchTool()])</code></pr
     // ── Copy buttons ──────────────────────────────────────────────────────────
     document.querySelectorAll('.docs-code-block__copy').forEach(btn => {
       btn.addEventListener('click', () => {
-        const pre = btn.closest('.docs-code-block').querySelector('pre');
+        const pre  = btn.closest('.docs-code-block').querySelector('pre');
         const text = btn.dataset.copy || pre?.textContent || '';
         navigator.clipboard?.writeText(text.trim()).then(() => {
           const orig = btn.textContent;
