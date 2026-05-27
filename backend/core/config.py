@@ -5,8 +5,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str
-    anthropic_api_key: str
-    backend_api_key: str
+    anthropic_api_key: str = ""
+    backend_api_key: str = ""
     backend_port: int = 8000
     cors_origins: str = "http://localhost:3000"
 

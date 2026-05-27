@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.config import settings
 from core.database import get_db
+from core.platform_cache import get_anthropic_key
 from core.security import require_api_key
 from models.agent import Agent, AgentStatus
 from models.chat_message import ChatMessage
@@ -23,7 +23,6 @@ from orchestrator.schemas import (
 
 router = APIRouter(prefix="/api", tags=["orchestrator"])
 
-_anthropic = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
 _HISTORY_LIMIT = 40
 _INVOKE_TIMEOUT = 60.0
 
@@ -97,7 +96,7 @@ async def _call_anthropic(
     if agent.tools:
         kwargs["tools"] = agent.tools
 
-    resp = await _anthropic.messages.create(**kwargs)
+    resp = await anthropic.AsyncAnthropic(api_key=get_anthropic_key()).messages.create(**kwargs)
     text = resp.content[0].text if resp.content else ""
     tokens = resp.usage.input_tokens + resp.usage.output_tokens
     return text, tokens
@@ -118,7 +117,7 @@ async def _call_remote_agent(
             resp = await client.post(
                 url,
                 json=forward.model_dump(),
-                headers={"X-Anthropic-Key": settings.anthropic_api_key},
+                headers={"X-Anthropic-Key": get_anthropic_key()},
             )
             resp.raise_for_status()
         except httpx.TimeoutException:

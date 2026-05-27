@@ -77,7 +77,7 @@
         });
         if (r.ok) {
           const d = await r.json();
-          if (!d.anthropic_connected || d.agent_count === 0) {
+          if (!d.anthropic_connected) {
             window.location.replace('/setup.html');
             return;
           }

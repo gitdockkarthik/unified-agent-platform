@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from encryption import decrypt, encrypt, is_secret_key
 from report_store import add_report
 from tools.noise_detector import classify_alerts
 from tools.source import OpsgenieAPISource
@@ -35,13 +36,15 @@ async def _upsert(key: str, value) -> None:
     if SessionLocal is None:
         return
     now = datetime.now(timezone.utc)
+    raw = json.dumps(value)
+    stored = encrypt(raw) if is_secret_key(key) else raw
     async with SessionLocal() as session:
         stmt = (
             pg_insert(AgentConfig)
-            .values(key=key, value=json.dumps(value), updated_at=now)
+            .values(key=key, value=stored, updated_at=now)
             .on_conflict_do_update(
                 index_elements=["key"],
-                set_={"value": json.dumps(value), "updated_at": now},
+                set_={"value": stored, "updated_at": now},
             )
         )
         await session.execute(stmt)
@@ -58,7 +61,10 @@ async def load_config_from_db() -> dict:
     try:
         async with SessionLocal() as session:
             rows = (await session.execute(select(AgentConfig))).scalars().all()
-        db_cfg = {r.key: json.loads(r.value) for r in rows}
+        db_cfg = {
+            r.key: json.loads(decrypt(r.value) if is_secret_key(r.key) else r.value)
+            for r in rows
+        }
         _config.update(db_cfg)
         return db_cfg
     except Exception:
