@@ -12,7 +12,7 @@ from agent import AgentRunner
 from config import settings
 from routes_dashboard import router as dashboard_router
 from routes_reports import router as reports_router
-from routes_settings import router as settings_router
+from routes_settings import _run_opsgenie_sync, load_config_from_db, router as settings_router
 from tools.dashboard_builder import DashboardBuilderTool
 from tools.noise_detector import NoiseDetectorTool
 from tools.source import FileSource
@@ -104,12 +104,45 @@ async def _register_self() -> None:
 # ── App ───────────────────────────────────────────────────────────────────────
 
 
+async def _init_config() -> None:
+    from database import engine
+    from models import Base
+
+    if engine is not None:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+    db_cfg = await load_config_from_db()
+    if not db_cfg:
+        logger.info("No saved config found — waiting for user setup")
+        return
+
+    logger.info("Config loaded from DB — source_type: %s", db_cfg.get("source_type", "file"))
+
+    if (
+        db_cfg.get("source_type") == "opsgenie"
+        and db_cfg.get("cloud_id")
+        and db_cfg.get("email")
+        and db_cfg.get("api_token")
+    ):
+        logger.info("Config loaded from DB — OpsGenie auto-sync running")
+        try:
+            result = await _run_opsgenie_sync()
+            logger.info("OpsGenie auto-sync complete — %d alerts loaded", result["alert_count"])
+        except Exception:
+            logger.exception("OpsGenie auto-sync failed")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         await _register_self()
     except Exception:
         logger.exception("Self-registration raised an unexpected exception (agent will still start)")
+    try:
+        await _init_config()
+    except Exception:
+        logger.exception("Config initialisation raised an unexpected exception (agent will still start)")
     yield
 
 

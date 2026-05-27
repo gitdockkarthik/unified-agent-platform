@@ -14,6 +14,7 @@ from agent import AgentRunner
 from config import settings
 from routes_dashboard import router as dashboard_router
 from routes_reports import router as reports_router
+from routes_settings import load_config_from_db, router as settings_router
 from tools.dashboard_builder import DashboardBuilderTool
 from tools.duckdb_engine import CurQueryTool
 from tools.source import FileSource
@@ -103,18 +104,38 @@ async def _register_self() -> None:
 # ── App ───────────────────────────────────────────────────────────────────────
 
 
+async def _init_config() -> None:
+    from database import engine
+    from models import Base
+
+    if engine is not None:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+    db_cfg = await load_config_from_db()
+    if not db_cfg:
+        logger.info("No saved config found — waiting for user setup")
+    else:
+        logger.info("Config loaded from DB — source_type: %s", db_cfg.get("source_type", "file"))
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
         await _register_self()
     except Exception:
         logger.exception("Self-registration raised an unexpected exception (agent will still start)")
+    try:
+        await _init_config()
+    except Exception:
+        logger.exception("Config initialisation raised an unexpected exception (agent will still start)")
     yield
 
 
 app = FastAPI(title=settings.agent_name, version="0.1.0", lifespan=lifespan)
 app.include_router(dashboard_router)
 app.include_router(reports_router)
+app.include_router(settings_router)
 
 
 @app.get("/health")
