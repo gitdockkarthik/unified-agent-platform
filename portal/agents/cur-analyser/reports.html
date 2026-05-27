@@ -162,6 +162,7 @@
     }
 
     async function loadReports() {
+      await portalReady;
       const el = document.getElementById('reportsBody');
       el.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⏳</div><div class="empty-state__title">Loading…</div></div>';
       try {

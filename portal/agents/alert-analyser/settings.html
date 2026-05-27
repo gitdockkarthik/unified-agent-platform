@@ -169,6 +169,7 @@
 
     // ── load saved settings ──────────────────────────────────────────────────
     async function loadSettings() {
+      await portalReady;
       try {
         const res = await fetch(`${PROXY}/settings`, { headers: authHeaders() });
         if (!res.ok) return;
