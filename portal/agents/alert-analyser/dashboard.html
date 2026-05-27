@@ -140,6 +140,7 @@
     }
 
     async function loadDashboard() {
+      await portalReady;
       ['overview','noise','genuine','trends'].forEach(t =>
         document.getElementById('tab-' + t).innerHTML = skeletonHTML());
       try {

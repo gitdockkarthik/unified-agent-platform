@@ -139,6 +139,7 @@
     let svcChart, trendChart;
 
     async function load() {
+      await portalReady;
       try {
         const data = await api('/dashboard');
         document.getElementById('loadingState').style.display = 'none';

@@ -57,7 +57,8 @@ async function initPortal() {
 }
 
 // Auto-bootstrap: fetch API key from backend on script load.
-initPortal();
+// Expose as a Promise so pages can await portalReady before making authenticated calls.
+const portalReady = initPortal();
 
 // ── Public API ──────────────────────────────────────────────────────────────────
 
