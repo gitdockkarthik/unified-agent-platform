@@ -131,15 +131,15 @@ async def persist_report(report_id: int) -> None:
         logger.exception("persist_report: failed to save report %d to DB", report_id)
 
 
-async def load_from_db() -> None:
-    """Populate the in-memory store from the database on startup."""
+async def load_from_db() -> int:
+    """Populate the in-memory store from the database on startup. Returns count restored."""
     global _counter
     from database import SessionLocal
     from models import CurReport
     from sqlalchemy import select
 
     if SessionLocal is None:
-        return
+        return 0
 
     try:
         async with SessionLocal() as session:
@@ -148,7 +148,7 @@ async def load_from_db() -> None:
             ).scalars().all()
 
         if not rows:
-            return
+            return 0
 
         loaded: list[dict[str, Any]] = []
         for r in rows:
@@ -171,10 +171,10 @@ async def load_from_db() -> None:
         with _lock:
             _reports.clear()
             _reports.extend(loaded)
-            if loaded:
-                global _counter
-                _counter = max(r["id"] for r in loaded)
+            _counter = max(r["id"] for r in loaded)
 
         logger.info("load_from_db: restored %d report(s) from DB", len(loaded))
+        return len(loaded)
     except Exception:
         logger.exception("load_from_db: failed to load reports from DB")
+        return 0

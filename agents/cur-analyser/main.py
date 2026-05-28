@@ -133,11 +133,15 @@ async def _init_config() -> None:
 
     db_cfg = await load_config_from_db()
     if not db_cfg:
-        logger.info("No saved config found — waiting for user setup")
+        logger.info("_init_config: no saved config found — waiting for user setup")
     else:
-        logger.info("Config loaded from DB — source_type: %s", db_cfg.get("source_type", "file"))
+        logger.info("_init_config: config loaded from DB — source_type: %s", db_cfg.get("source_type", "file"))
 
-    await load_reports_from_db()
+    report_count = await load_reports_from_db()
+    if report_count:
+        logger.info("_init_config: restored %d report(s) from DB", report_count)
+    else:
+        logger.info("_init_config: no reports found in DB")
 
 
 async def _sync_loop() -> None:
