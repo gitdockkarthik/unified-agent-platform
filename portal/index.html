@@ -79,7 +79,7 @@
         if (r.ok) {
           const d = await r.json();
           if (!d.anthropic_connected) {
-            window.location.replace('/setup');
+            window.location.replace('/setup.html');
             return;
           }
         }
