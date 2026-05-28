@@ -143,6 +143,17 @@ async def _init_config() -> None:
 
     logger.info("_init_config: config loaded from DB — source_type: %s", db_cfg.get("source_type", "file"))
 
+    # DB values take priority over env vars for runtime-tunable thresholds.
+    if "noise_threshold_repeat" in db_cfg:
+        settings.noise_threshold_repeat = db_cfg["noise_threshold_repeat"]
+    if "noise_threshold_close_secs" in db_cfg:
+        settings.noise_threshold_close_secs = db_cfg["noise_threshold_close_secs"]
+    logger.info(
+        "_init_config: noise thresholds — repeat=%d, close_secs=%d",
+        settings.noise_threshold_repeat,
+        settings.noise_threshold_close_secs,
+    )
+
     if (
         db_cfg.get("source_type") == "opsgenie"
         and db_cfg.get("cloud_id")

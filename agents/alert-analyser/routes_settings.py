@@ -26,6 +26,8 @@ _DEFAULTS: dict = {
     "last_synced": None,
     "alert_count": None,
     "sync_interval_minutes": 0,
+    "noise_threshold_repeat": 3,
+    "noise_threshold_close_secs": 300,
 }
 
 # Write-through in-memory cache; populated from DB on startup.
@@ -148,6 +150,8 @@ class SettingsPayload(BaseModel):
     email: str = ""
     api_token: str = ""
     sync_interval_minutes: int = 0
+    noise_threshold_repeat: int = 3
+    noise_threshold_close_secs: int = 300
 
 
 @router.get("")

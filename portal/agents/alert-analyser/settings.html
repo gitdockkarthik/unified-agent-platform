@@ -54,6 +54,11 @@
     .sync-section { margin-bottom: 24px; padding-top: 20px; border-top: 1px solid #f1f5f9; }
     .sync-section__title { font-size: .88rem; font-weight: 700; color: #374151; margin-bottom: 12px; }
     .sync-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .tune-fields { display: flex; flex-direction: column; gap: 16px; }
+    .tune-field { display: flex; flex-direction: column; gap: 6px; }
+    .tune-field label { font-size: .83rem; font-weight: 600; color: #374151; }
+    .tune-field input[type=number] { padding: 9px 12px; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: .9rem; color: #1a1f2e; background: #fff; outline: none; transition: border-color .15s; width: 110px; }
+    .tune-field input[type=number]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
     .sync-row select { padding: 9px 32px 9px 12px; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: .88rem; color: #1a1f2e; background: #fff; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; transition: border-color .15s; min-width: 200px; }
     .sync-row select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
     .last-synced-hint { font-size: .78rem; color: #9ca3af; }
@@ -148,6 +153,21 @@
         </div>
       </div>
 
+      <div class="sync-section">
+        <div class="sync-section__title">Noise Detection Tuning</div>
+        <div class="tune-fields">
+          <div class="tune-field">
+            <label for="noiseRepeat">Flag as noise if the same alert fires more than X times in 1 hour</label>
+            <input type="number" id="noiseRepeat" min="1" max="20" value="3">
+          </div>
+          <div class="tune-field">
+            <label for="noiseCloseSecs">Flag as noise if alert auto-closes in fewer than X seconds</label>
+            <input type="number" id="noiseCloseSecs" min="30" max="3600" value="300">
+            <span class="field-group__hint" id="noiseCloseHint">300 seconds = 5 minutes</span>
+          </div>
+        </div>
+      </div>
+
       <div class="btn-row">
         <button class="btn-save" id="saveBtn" onclick="saveAndSync()">Save &amp; Sync</button>
         <button class="btn-save" id="saveOnlyBtn" onclick="saveOnly()" style="background:#64748b">Save Only</button>
@@ -180,6 +200,18 @@
     const PROXY = `${BACKEND_URL}/api/agents/${SLUG}/proxy`;
 
     const authHeaders = () => _authHeaders();
+
+    function formatSecs(s) {
+      s = parseInt(s, 10);
+      if (!s || s < 60) return `${s || 0} seconds`;
+      const m = s / 60;
+      const label = Number.isInteger(m) ? m : m.toFixed(1).replace(/\.0$/, '');
+      return `${s} seconds = ${label} minute${m === 1 ? '' : 's'}`;
+    }
+
+    document.getElementById('noiseCloseSecs').addEventListener('input', function () {
+      document.getElementById('noiseCloseHint').textContent = formatSecs(this.value);
+    });
 
     // ── radio highlight ──────────────────────────────────────────────────────
     document.querySelectorAll('input[name=source_type]').forEach(radio => {
@@ -221,6 +253,14 @@
           document.getElementById('lastSyncedHint').style.display = '';
         }
 
+        // Noise thresholds
+        if (cfg.noise_threshold_repeat != null)
+          document.getElementById('noiseRepeat').value = cfg.noise_threshold_repeat;
+        if (cfg.noise_threshold_close_secs != null) {
+          document.getElementById('noiseCloseSecs').value = cfg.noise_threshold_close_secs;
+          document.getElementById('noiseCloseHint').textContent = formatSecs(cfg.noise_threshold_close_secs);
+        }
+
         updateStatusCard(cfg);
       } catch (_) {}
     }
@@ -252,11 +292,13 @@
     function getFormPayload() {
       const type = document.querySelector('input[name=source_type]:checked').value;
       return {
-        source_type:           type,
-        cloud_id:              document.getElementById('cloudId').value.trim(),
-        email:                 document.getElementById('email').value.trim(),
-        api_token:             document.getElementById('apiToken').value,
-        sync_interval_minutes: parseInt(document.getElementById('syncInterval').value, 10),
+        source_type:              type,
+        cloud_id:                 document.getElementById('cloudId').value.trim(),
+        email:                    document.getElementById('email').value.trim(),
+        api_token:                document.getElementById('apiToken').value,
+        sync_interval_minutes:    parseInt(document.getElementById('syncInterval').value, 10),
+        noise_threshold_repeat:   parseInt(document.getElementById('noiseRepeat').value, 10),
+        noise_threshold_close_secs: parseInt(document.getElementById('noiseCloseSecs').value, 10),
       };
     }
 
