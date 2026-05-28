@@ -15,11 +15,11 @@
     </a>
     <nav class="topbar__nav">
       <a href="/" class="topbar__link">Agents</a>
-      <a href="/admin/index.html" class="topbar__link topbar__link--active">Admin</a>
-      <a href="/docs/index.html" class="topbar__link">Docs</a>
+      <a href="/admin/" class="topbar__link topbar__link--active">Admin</a>
+      <a href="/docs/" class="topbar__link">Docs</a>
     </nav>
     <div class="topbar__right">
-      <a href="/admin/register.html" class="btn btn--primary btn--sm">+ Register Agent</a>
+      <a href="/admin/register" class="btn btn--primary btn--sm">+ Register Agent</a>
     </div>
   </header>
 
@@ -179,7 +179,7 @@
                 <button class="btn btn--danger btn--sm"
                   onclick="act('deprecate','${agent.id}','${agent.name}')">Deprecate</button>
               ` : ''}
-              <a href="/chat.html?agent=${encodeURIComponent(agent.slug)}"
+              <a href="/chat?agent=${encodeURIComponent(agent.slug)}"
                  class="btn btn--ghost btn--sm"
                  ${agent.status !== 'published' ? 'style="opacity:.4;pointer-events:none"' : ''}>Chat</a>
             </td>

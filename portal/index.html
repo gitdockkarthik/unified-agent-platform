@@ -15,11 +15,11 @@
     </a>
     <nav class="topbar__nav">
       <a href="/" class="topbar__link topbar__link--active">Agents</a>
-      <a href="/admin/index.html" class="topbar__link">Admin</a>
-      <a href="/docs/index.html" class="topbar__link">Docs</a>
+      <a href="/admin/" class="topbar__link">Admin</a>
+      <a href="/docs/" class="topbar__link">Docs</a>
     </nav>
     <div class="topbar__right">
-      <a href="/admin/register.html" class="btn btn--primary btn--sm">+ Register Agent</a>
+      <a href="/admin/register" class="btn btn--primary btn--sm">+ Register Agent</a>
     </div>
   </header>
 
@@ -79,7 +79,7 @@
         if (r.ok) {
           const d = await r.json();
           if (!d.anthropic_connected) {
-            window.location.replace('/setup.html');
+            window.location.replace('/setup');
             return;
           }
         }
@@ -108,7 +108,7 @@
             <div class="empty-state__icon">🤖</div>
             <div class="empty-state__title">No agents yet</div>
             <div class="empty-state__sub">
-              <a href="/admin/register.html" style="color:var(--accent)">Register your first agent</a>
+              <a href="/admin/register" style="color:var(--accent)">Register your first agent</a>
             </div>
           </div>`;
         return;
@@ -123,17 +123,17 @@
         // Extra quick-links for agents that expose dashboard/reports pages
         const agentLinks = {
           'alert-analyser': [
-            { label: 'Dashboard', href: '/agents/alert-analyser/dashboard.html' },
-            { label: 'Reports',   href: '/agents/alert-analyser/reports.html'   },
-            { label: 'Settings',  href: '/agents/alert-analyser/settings.html'  },
+            { label: 'Dashboard', href: '/agents/alert-analyser/dashboard' },
+            { label: 'Reports',   href: '/agents/alert-analyser/reports'   },
+            { label: 'Settings',  href: '/agents/alert-analyser/settings'  },
           ],
           'cur-analyser': [
-            { label: 'Dashboard', href: '/agents/cur-analyser/dashboard.html' },
-            { label: 'Reports',   href: '/agents/cur-analyser/reports.html'   },
-            { label: 'Settings',  href: '/agents/cur-analyser/settings.html'  },
+            { label: 'Dashboard', href: '/agents/cur-analyser/dashboard' },
+            { label: 'Reports',   href: '/agents/cur-analyser/reports'   },
+            { label: 'Settings',  href: '/agents/cur-analyser/settings'  },
           ],
           'infra-health': [
-            { label: 'Settings',  href: '/agents/infra-health/settings.html'  },
+            { label: 'Settings',  href: '/agents/infra-health/settings'  },
           ],
         };
         const extras = (agentLinks[slug] || []).map(l =>
@@ -141,7 +141,7 @@
         ).join('');
 
         return `
-          <div class="agent-card ${ac}" onclick="window.location='/chat.html?agent=${encodeURIComponent(slug)}'" style="cursor:pointer">
+          <div class="agent-card ${ac}" onclick="window.location='/chat?agent=${encodeURIComponent(slug)}'" style="cursor:pointer">
             <div class="agent-card__accent"></div>
             <div class="agent-card__body">
               <div class="agent-card__icon">${initial}</div>
@@ -157,7 +157,7 @@
               </div>
               <div style="display:flex;gap:6px;flex-wrap:wrap">
                 ${extras}
-                <a href="/chat.html?agent=${encodeURIComponent(slug)}"
+                <a href="/chat?agent=${encodeURIComponent(slug)}"
                    class="btn btn--primary btn--sm"
                    onclick="event.stopPropagation()">Chat →</a>
               </div>

@@ -51,6 +51,12 @@
     .badge-source--opsgenie { background: #dbeafe; color: #1d4ed8; }
     .badge-source--file { background: #f1f5f9; color: #475569; }
     .badge-source--synthetic { background: #fef9c3; color: #92400e; }
+    .sync-section { margin-bottom: 24px; padding-top: 20px; border-top: 1px solid #f1f5f9; }
+    .sync-section__title { font-size: .88rem; font-weight: 700; color: #374151; margin-bottom: 12px; }
+    .sync-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .sync-row select { padding: 9px 32px 9px 12px; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: .88rem; color: #1a1f2e; background: #fff; outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; transition: border-color .15s; min-width: 200px; }
+    .sync-row select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+    .last-synced-hint { font-size: .78rem; color: #9ca3af; }
     @media (max-width: 768px) { .subnav { padding: 0 20px; } .content { padding: 20px; } .settings-card { padding: 20px; } }
   </style>
 </head>
@@ -62,16 +68,16 @@
     </a>
     <nav class="topbar__nav">
       <a href="/" class="topbar__link">Agents</a>
-      <a href="/admin/index.html" class="topbar__link">Admin</a>
+      <a href="/admin/" class="topbar__link">Admin</a>
     </nav>
     <div class="topbar__right" style="font-size:.85rem;color:var(--text-muted)">Alert Analyser</div>
   </header>
 
   <nav class="subnav">
-    <a href="/chat.html?agent=alert-analyser" class="subnav__link">💬 Chat</a>
-    <a href="/agents/alert-analyser/dashboard.html" class="subnav__link">📊 Dashboard</a>
-    <a href="/agents/alert-analyser/reports.html" class="subnav__link">📁 Reports</a>
-    <a href="/agents/alert-analyser/settings.html" class="subnav__link subnav__link--active">⚙ Settings</a>
+    <a href="/chat?agent=alert-analyser" class="subnav__link">💬 Chat</a>
+    <a href="/agents/alert-analyser/dashboard" class="subnav__link">📊 Dashboard</a>
+    <a href="/agents/alert-analyser/reports" class="subnav__link">📁 Reports</a>
+    <a href="/agents/alert-analyser/settings" class="subnav__link subnav__link--active">⚙ Settings</a>
   </nav>
 
   <div class="content">
@@ -122,6 +128,23 @@
           <label for="apiToken">API Token</label>
           <input type="password" id="apiToken" placeholder="Atlassian API token" autocomplete="new-password">
           <span class="field-group__hint">Generate at id.atlassian.com/manage-profile/security/api-tokens</span>
+        </div>
+      </div>
+
+      <div class="sync-section">
+        <div class="sync-section__title">Sync Schedule</div>
+        <div class="sync-row">
+          <select id="syncInterval">
+            <option value="0">Disabled</option>
+            <option value="15">Every 15 minutes</option>
+            <option value="30">Every 30 minutes</option>
+            <option value="60">Every hour</option>
+            <option value="360">Every 6 hours</option>
+            <option value="1440">Every 24 hours</option>
+          </select>
+          <span class="last-synced-hint" id="lastSyncedHint" style="display:none">
+            Last synced: <span id="lastSyncedInline">—</span>
+          </span>
         </div>
       </div>
 
@@ -183,6 +206,21 @@
         }
         if (cfg.cloud_id) document.getElementById('cloudId').value = cfg.cloud_id;
         if (cfg.email)    document.getElementById('email').value    = cfg.email;
+
+        // Sync interval dropdown
+        const interval = cfg.sync_interval_minutes ?? 0;
+        const sel = document.getElementById('syncInterval');
+        // Select the closest matching option (exact match first, else leave at Disabled)
+        if ([...sel.options].some(o => parseInt(o.value) === interval)) {
+          sel.value = String(interval);
+        }
+
+        // Inline last-synced hint
+        if (cfg.last_synced) {
+          document.getElementById('lastSyncedInline').textContent = new Date(cfg.last_synced).toLocaleString();
+          document.getElementById('lastSyncedHint').style.display = '';
+        }
+
         updateStatusCard(cfg);
       } catch (_) {}
     }
@@ -198,11 +236,13 @@
                        : 'badge-source--file';
       document.getElementById('stSource').innerHTML = `<span class="badge-source ${badgeClass}">${type}</span>`;
 
-      if (cfg.last_synced) {
-        const d = new Date(cfg.last_synced);
-        document.getElementById('stLastSynced').textContent = d.toLocaleString();
-      } else {
-        document.getElementById('stLastSynced').textContent = 'Never';
+      const lastSyncedTs = cfg.last_synced ? new Date(cfg.last_synced).toLocaleString() : null;
+      document.getElementById('stLastSynced').textContent = lastSyncedTs || 'Never';
+
+      // Keep inline hint in sync too
+      if (lastSyncedTs) {
+        document.getElementById('lastSyncedInline').textContent = lastSyncedTs;
+        document.getElementById('lastSyncedHint').style.display = '';
       }
 
       document.getElementById('stAlertCount').textContent =
@@ -212,10 +252,11 @@
     function getFormPayload() {
       const type = document.querySelector('input[name=source_type]:checked').value;
       return {
-        source_type: type,
-        cloud_id:  document.getElementById('cloudId').value.trim(),
-        email:     document.getElementById('email').value.trim(),
-        api_token: document.getElementById('apiToken').value,
+        source_type:           type,
+        cloud_id:              document.getElementById('cloudId').value.trim(),
+        email:                 document.getElementById('email').value.trim(),
+        api_token:             document.getElementById('apiToken').value,
+        sync_interval_minutes: parseInt(document.getElementById('syncInterval').value, 10),
       };
     }
 

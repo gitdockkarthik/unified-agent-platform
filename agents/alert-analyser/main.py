@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -12,7 +13,7 @@ from agent import AgentRunner
 from config import settings
 from routes_dashboard import router as dashboard_router
 from routes_reports import router as reports_router
-from routes_settings import _run_opsgenie_sync, load_config_from_db, router as settings_router
+from routes_settings import _config, _run_opsgenie_sync, _sync_changed, load_config_from_db, router as settings_router
 from tools.dashboard_builder import DashboardBuilderTool
 from tools.noise_detector import NoiseDetectorTool
 from tools.source import FileSource
@@ -156,6 +157,51 @@ async def _init_config() -> None:
             logger.exception("OpsGenie auto-sync failed")
 
 
+async def _sync_loop() -> None:
+    """Background sync task.
+
+    Reads sync_interval_minutes from _config on every tick so changes made via
+    the settings page take effect immediately — no restart required.
+
+    When disabled (interval=0) the loop parks on _sync_changed and wakes the
+    moment the user saves a non-zero interval.  When the user shortens the
+    interval mid-sleep, _sync_changed fires and the loop re-evaluates without
+    waiting for the old timeout to expire.
+    """
+    logger.info("Auto-sync loop started")
+    while True:
+        _sync_changed.clear()
+        interval = _config.get("sync_interval_minutes", 0)
+
+        if interval <= 0:
+            # Disabled — park until settings change.
+            await _sync_changed.wait()
+            continue
+
+        # Sleep for the configured interval, but wake early on settings change.
+        try:
+            await asyncio.wait_for(_sync_changed.wait(), timeout=interval * 60)
+            # Settings changed before timeout — re-evaluate without syncing.
+            continue
+        except asyncio.TimeoutError:
+            pass
+
+        # Interval elapsed — run sync if OpsGenie is fully configured.
+        if (
+            _config.get("source_type") == "opsgenie"
+            and _config.get("cloud_id")
+            and _config.get("email")
+            and _config.get("api_token")
+        ):
+            try:
+                result = await _run_opsgenie_sync()
+                logger.info("Auto-sync: %d alerts loaded", result["alert_count"])
+            except Exception:
+                logger.exception("Auto-sync: sync failed")
+        else:
+            logger.debug("Auto-sync: OpsGenie not fully configured — skipping tick")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
@@ -166,7 +212,16 @@ async def lifespan(app: FastAPI):
         await _init_config()
     except Exception:
         logger.exception("Config initialisation raised an unexpected exception (agent will still start)")
+
+    sync_task = asyncio.create_task(_sync_loop())
+
     yield
+
+    sync_task.cancel()
+    try:
+        await sync_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(title=settings.agent_name, version="0.1.0", lifespan=lifespan)

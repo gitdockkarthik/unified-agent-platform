@@ -1,3 +1,4 @@
+import asyncio
 import csv
 import io
 import json
@@ -14,6 +15,7 @@ from agent import AgentRunner
 from config import settings
 from routes_dashboard import router as dashboard_router
 from routes_reports import router as reports_router
+from report_store import load_from_db as load_reports_from_db
 from routes_settings import load_config_from_db, router as settings_router
 from tools.dashboard_builder import DashboardBuilderTool
 from tools.duckdb_engine import CurQueryTool
@@ -127,12 +129,24 @@ async def _init_config() -> None:
     if engine is not None:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        logger.info("_init_config: DB tables ensured")
 
     db_cfg = await load_config_from_db()
     if not db_cfg:
         logger.info("No saved config found — waiting for user setup")
     else:
         logger.info("Config loaded from DB — source_type: %s", db_cfg.get("source_type", "file"))
+
+    await load_reports_from_db()
+
+
+async def _sync_loop() -> None:
+    """Background task: placeholder for future scheduled CUR source sync."""
+    interval = settings.sync_interval_minutes
+    logger.info("Auto-sync loop started: interval=%d minutes", interval)
+    while True:
+        await asyncio.sleep(interval * 60)
+        logger.debug("Auto-sync: no remote CUR source configured — skipping")
 
 
 @asynccontextmanager
@@ -145,7 +159,19 @@ async def lifespan(app: FastAPI):
         await _init_config()
     except Exception:
         logger.exception("Config initialisation raised an unexpected exception (agent will still start)")
+
+    sync_task: asyncio.Task | None = None
+    if settings.sync_interval_minutes > 0:
+        sync_task = asyncio.create_task(_sync_loop())
+
     yield
+
+    if sync_task:
+        sync_task.cancel()
+        try:
+            await sync_task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(title=settings.agent_name, version="0.1.0", lifespan=lifespan)

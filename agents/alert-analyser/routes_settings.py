@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from datetime import datetime, timezone
@@ -23,10 +24,14 @@ _DEFAULTS: dict = {
     "api_token": "",
     "last_synced": None,
     "alert_count": None,
+    "sync_interval_minutes": 0,
 }
 
 # Write-through in-memory cache; populated from DB on startup.
 _config: dict = dict(_DEFAULTS)
+
+# Fired whenever settings are saved so the background sync loop re-evaluates immediately.
+_sync_changed = asyncio.Event()
 
 
 async def _upsert(key: str, value) -> None:
@@ -91,6 +96,15 @@ async def load_config_from_db() -> dict:
 
         _config.update(db_cfg)
         logger.info("load_config_from_db: successfully loaded keys: %s", list(db_cfg))
+
+        # Re-encrypt any secrets stored with a previous key (or stored plaintext).
+        # Idempotent: if already encrypted with the current key this is a no-op in terms of data.
+        secret_keys = [k for k in db_cfg if is_secret_key(k) and db_cfg[k]]
+        if secret_keys:
+            for key in secret_keys:
+                await _upsert(key, db_cfg[key])
+            logger.info("load_config_from_db: re-encrypted %d secret key(s)", len(secret_keys))
+
         return db_cfg
     except Exception:
         logger.exception("load_config_from_db: DB query failed")
@@ -128,6 +142,7 @@ class SettingsPayload(BaseModel):
     cloud_id: str = ""
     email: str = ""
     api_token: str = ""
+    sync_interval_minutes: int = 0
 
 
 @router.get("")
@@ -142,6 +157,7 @@ async def save_settings(payload: SettingsPayload) -> dict:
     _config.update(data)
     for k, v in data.items():
         await _upsert(k, v)
+    _sync_changed.set()  # wake the background loop to re-evaluate interval immediately
     return {"ok": True}
 
 

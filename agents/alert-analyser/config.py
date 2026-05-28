@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     noise_threshold_repeat: int = 3      # aliases firing >N times in 1 hour are noise
     noise_threshold_close_secs: int = 300  # auto-close in <N seconds is noise
 
+    # Auto-sync interval; 0 disables the background task
+    sync_interval_minutes: int = 0
+
     # Server
     port: int = 8001
 

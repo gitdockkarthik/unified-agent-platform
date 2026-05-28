@@ -18,8 +18,11 @@ class Settings(BaseSettings):
     registry_url: str = ""
     backend_api_key: str = ""
 
-    # Database (for future DB-backed CUR storage — Phase 2)
+    # Database
     database_url: str = ""
+
+    # Auto-sync interval; 0 disables the background task
+    sync_interval_minutes: int = 0
 
     # Server
     port: int = 8002

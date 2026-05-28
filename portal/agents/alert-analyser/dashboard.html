@@ -62,16 +62,16 @@
     </a>
     <nav class="topbar__nav">
       <a href="/" class="topbar__link">Agents</a>
-      <a href="/admin/index.html" class="topbar__link">Admin</a>
+      <a href="/admin/" class="topbar__link">Admin</a>
     </nav>
     <div class="topbar__right" style="font-size:.85rem;color:var(--text-muted)">Alert Analyser</div>
   </header>
 
   <nav class="subnav">
-    <a href="/chat.html?agent=alert-analyser" class="subnav__link">💬 Chat</a>
-    <a href="/agents/alert-analyser/dashboard.html" class="subnav__link subnav__link--active">📊 Dashboard</a>
-    <a href="/agents/alert-analyser/reports.html" class="subnav__link">📁 Reports</a>
-    <a href="/agents/alert-analyser/settings.html" class="subnav__link">⚙ Settings</a>
+    <a href="/chat?agent=alert-analyser" class="subnav__link">💬 Chat</a>
+    <a href="/agents/alert-analyser/dashboard" class="subnav__link subnav__link--active">📊 Dashboard</a>
+    <a href="/agents/alert-analyser/reports" class="subnav__link">📁 Reports</a>
+    <a href="/agents/alert-analyser/settings" class="subnav__link">⚙ Settings</a>
   </nav>
 
   <div class="content">
@@ -148,7 +148,7 @@
         if (data.empty) {
           ['overview','noise','genuine','trends'].forEach(t =>
             document.getElementById('tab-' + t).innerHTML = emptyState('🚨','No alert data loaded',
-              'Click "Generate Sample Data" or upload alerts on the <a href="/agents/alert-analyser/reports.html">Reports page</a>.'));
+              'Click "Generate Sample Data" or upload alerts on the <a href="/agents/alert-analyser/reports">Reports page</a>.'));
           return;
         }
         stats = data.stats;

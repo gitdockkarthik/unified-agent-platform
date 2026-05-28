@@ -8,7 +8,7 @@ from datetime import date, timedelta
 
 from fastapi import APIRouter, HTTPException, UploadFile
 
-from report_store import add_report, list_reports, get_report_rows
+from report_store import add_report, list_reports, get_report_rows, persist_report
 from tools.duckdb_engine import get_total_cost
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -75,6 +75,7 @@ async def generate_sample() -> dict:
         total_cost=summary.get("total_cost", 0.0),
         file_size=file_size,
     )
+    await persist_report(report["id"])
     return report
 
 
@@ -96,6 +97,7 @@ async def upload_report(file: UploadFile) -> dict:
         total_cost=summary.get("total_cost", 0.0),
         file_size=len(raw),
     )
+    await persist_report(report["id"])
     return report
 
 

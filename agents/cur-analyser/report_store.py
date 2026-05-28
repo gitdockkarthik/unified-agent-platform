@@ -1,15 +1,19 @@
-"""In-memory CUR report store — shared between routes_reports and routes_dashboard.
+"""CUR report store — in-memory write-through cache backed by PostgreSQL.
 
-State is process-scoped and resets on restart. Suitable for single-instance
-Railway deployment.
+In-memory functions (add_report, list_reports, get_report_rows, …) are
+synchronous for simplicity.  DB operations (persist_report, load_from_db)
+are async and called from route handlers and the lifespan hook respectively.
 """
 from __future__ import annotations
 
 import csv
 import io
+import logging
 import threading
 from datetime import datetime, timezone
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 _lock = threading.Lock()
 _reports: list[dict[str, Any]] = []
@@ -20,6 +24,8 @@ def _parse_rows(csv_text: str) -> list[dict[str, str]]:
     reader = csv.DictReader(io.StringIO(csv_text))
     return [dict(row) for row in reader]
 
+
+# ── In-memory (sync) ──────────────────────────────────────────────────────────
 
 def add_report(filename: str, csv_text: str, row_count: int, total_cost: float, file_size: int) -> dict[str, Any]:
     global _counter
@@ -66,3 +72,109 @@ def get_latest_meta() -> dict[str, Any] | None:
 
 def _public(r: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in r.items() if not k.startswith("_")}
+
+
+def _get_internal(report_id: int) -> dict[str, Any] | None:
+    with _lock:
+        for r in _reports:
+            if r["id"] == report_id:
+                return r
+    return None
+
+
+# ── DB persistence (async) ────────────────────────────────────────────────────
+
+async def persist_report(report_id: int) -> None:
+    """Upsert a report (identified by its in-memory id) to the database."""
+    from database import SessionLocal
+    from models import CurReport
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+    if SessionLocal is None:
+        return
+
+    report = _get_internal(report_id)
+    if report is None:
+        logger.warning("persist_report: report %d not found in memory", report_id)
+        return
+
+    created_at = datetime.fromisoformat(report["created_at"])
+    try:
+        async with SessionLocal() as session:
+            stmt = (
+                pg_insert(CurReport)
+                .values(
+                    id=report["id"],
+                    filename=report["filename"],
+                    csv_data=report["_csv"],
+                    row_count=report["row_count"],
+                    total_cost=report["total_cost"],
+                    file_size=report["file_size"],
+                    status=report["status"],
+                    created_at=created_at,
+                )
+                .on_conflict_do_update(
+                    index_elements=["id"],
+                    set_={
+                        "filename": report["filename"],
+                        "csv_data": report["_csv"],
+                        "row_count": report["row_count"],
+                        "total_cost": report["total_cost"],
+                        "file_size": report["file_size"],
+                        "status": report["status"],
+                    },
+                )
+            )
+            await session.execute(stmt)
+            await session.commit()
+    except Exception:
+        logger.exception("persist_report: failed to save report %d to DB", report_id)
+
+
+async def load_from_db() -> None:
+    """Populate the in-memory store from the database on startup."""
+    global _counter
+    from database import SessionLocal
+    from models import CurReport
+    from sqlalchemy import select
+
+    if SessionLocal is None:
+        return
+
+    try:
+        async with SessionLocal() as session:
+            rows = (
+                await session.execute(select(CurReport).order_by(CurReport.created_at.desc()))
+            ).scalars().all()
+
+        if not rows:
+            return
+
+        loaded: list[dict[str, Any]] = []
+        for r in rows:
+            try:
+                parsed_rows = _parse_rows(r.csv_data)
+            except Exception:
+                parsed_rows = []
+            loaded.append({
+                "id": r.id,
+                "filename": r.filename,
+                "_csv": r.csv_data,
+                "_rows": parsed_rows,
+                "row_count": r.row_count,
+                "total_cost": r.total_cost,
+                "file_size": r.file_size,
+                "status": r.status,
+                "created_at": r.created_at.isoformat(),
+            })
+
+        with _lock:
+            _reports.clear()
+            _reports.extend(loaded)
+            if loaded:
+                global _counter
+                _counter = max(r["id"] for r in loaded)
+
+        logger.info("load_from_db: restored %d report(s) from DB", len(loaded))
+    except Exception:
+        logger.exception("load_from_db: failed to load reports from DB")
