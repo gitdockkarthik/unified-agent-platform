@@ -86,6 +86,7 @@ def _get_internal(report_id: int) -> dict[str, Any] | None:
 
 async def persist_report(report_id: int) -> None:
     """Upsert a report (identified by its in-memory id) to the database."""
+    from config import settings
     from database import SessionLocal
     from models import CurReport
     from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -105,6 +106,7 @@ async def persist_report(report_id: int) -> None:
                 pg_insert(CurReport)
                 .values(
                     id=report["id"],
+                    agent_slug=settings.agent_slug,
                     filename=report["filename"],
                     csv_data=report["_csv"],
                     row_count=report["row_count"],
@@ -116,6 +118,7 @@ async def persist_report(report_id: int) -> None:
                 .on_conflict_do_update(
                     index_elements=["id"],
                     set_={
+                        "agent_slug": settings.agent_slug,
                         "filename": report["filename"],
                         "csv_data": report["_csv"],
                         "row_count": report["row_count"],
@@ -134,6 +137,7 @@ async def persist_report(report_id: int) -> None:
 async def load_from_db() -> int:
     """Populate the in-memory store from the database on startup. Returns count restored."""
     global _counter
+    from config import settings
     from database import SessionLocal
     from models import CurReport
     from sqlalchemy import select
@@ -144,7 +148,11 @@ async def load_from_db() -> int:
     try:
         async with SessionLocal() as session:
             rows = (
-                await session.execute(select(CurReport).order_by(CurReport.created_at.desc()))
+                await session.execute(
+                    select(CurReport)
+                    .where(CurReport.agent_slug == settings.agent_slug)
+                    .order_by(CurReport.created_at.desc())
+                )
             ).scalars().all()
 
         if not rows:

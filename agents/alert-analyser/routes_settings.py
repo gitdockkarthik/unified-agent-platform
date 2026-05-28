@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from config import settings
 from encryption import decrypt, encrypt, is_secret_key
 from report_store import add_report
 from tools.noise_detector import classify_alerts
@@ -46,9 +47,9 @@ async def _upsert(key: str, value) -> None:
     async with SessionLocal() as session:
         stmt = (
             pg_insert(AgentConfig)
-            .values(key=key, value=stored, updated_at=now)
+            .values(agent_slug=settings.agent_slug, key=key, value=stored, updated_at=now)
             .on_conflict_do_update(
-                index_elements=["key"],
+                index_elements=["agent_slug", "key"],
                 set_={"value": stored, "updated_at": now},
             )
         )
@@ -66,7 +67,11 @@ async def load_config_from_db() -> dict:
         return {}
     try:
         async with SessionLocal() as session:
-            rows = (await session.execute(select(AgentConfig))).scalars().all()
+            rows = (
+                await session.execute(
+                    select(AgentConfig).where(AgentConfig.agent_slug == settings.agent_slug)
+                )
+            ).scalars().all()
 
         logger.info(
             "load_config_from_db: found %d row(s) in agent_config — keys: %s",
