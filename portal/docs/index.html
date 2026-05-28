@@ -518,6 +518,30 @@
             to the browser.
           </p>
 
+          <h4 class="docs-h4">Sync Schedule</h4>
+          <p class="docs-p">
+            Configure how often the agent automatically pulls fresh data from OpsGenie.
+            Options: <strong>Disabled</strong>, <strong>Every 15 min</strong>,
+            <strong>Every 30 min</strong>, <strong>Every hour</strong>,
+            <strong>Every 6 hours</strong>, <strong>Every 24 hours</strong>.
+            Set to Disabled if you prefer to sync manually.
+            The last synced time is shown below the dropdown.
+          </p>
+
+          <h4 class="docs-h4">Noise Detection Tuning</h4>
+          <p class="docs-p">
+            Two thresholds control how alerts are classified as noise:
+          </p>
+          <ul class="docs-ul">
+            <li class="docs-li"><strong>Repeat threshold</strong> — alerts firing more than this many times in 1 hour are flagged as noise. Default: 3.</li>
+            <li class="docs-li"><strong>Auto-close threshold</strong> — alerts that auto-close in fewer than this many seconds are flagged as noise. Default: 300 seconds (5 minutes).</li>
+          </ul>
+          <p class="docs-p">
+            Tune these to match your organisation's alert patterns. Changes take effect
+            immediately on the next sync. All settings are persisted to your database
+            and survive restarts.
+          </p>
+
           <h3 class="docs-h3" id="settings-cur">CUR Analyser</h3>
           <p class="docs-p">Choose the source for AWS cost data:</p>
           <ul class="docs-ul">
@@ -887,3 +911,4 @@ _runner = AgentRunner(tools=[MyTool()])</code></pre>
   </script>
 </body>
 </html>
+<!-- cache bust -->
