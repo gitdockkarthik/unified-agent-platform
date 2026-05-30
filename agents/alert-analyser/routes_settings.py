@@ -121,21 +121,21 @@ async def load_config_from_db() -> dict:
         return {}
 
 
-async def _run_opsgenie_sync() -> dict:
+async def _run_opsgenie_sync(full_sync: bool = False) -> dict:
     """Core sync logic — callable from HTTP handler or lifespan startup."""
     source = OpsgenieAPISource(
         cloud_id=_config["cloud_id"],
         email=_config["email"],
         api_token=_config["api_token"],
     )
-    sync_window_days = _config.get("sync_window_days", 7)
     last_synced = _config.get("last_synced")
 
-    if last_synced:
+    if last_synced and not full_sync:
         # Incremental — fetch only new alerts
         alerts = await source.load_alerts(created_after=last_synced)
     else:
         # Full window sync
+        sync_window_days = _config.get("sync_window_days", 7)
         alerts = await source.load_alerts(sync_window_days=sync_window_days)
 
     filename = f"opsgenie-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}.json"
@@ -220,4 +220,4 @@ async def sync_alerts() -> dict:
     for field in ("cloud_id", "email", "api_token"):
         if not _config.get(field):
             raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
-    return await _run_opsgenie_sync()
+    return await _run_opsgenie_sync(full_sync=True)
