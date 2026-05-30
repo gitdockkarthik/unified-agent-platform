@@ -68,24 +68,21 @@ class OpsgenieAPISource(AlertSource):
                 resp.raise_for_status()
                 data = resp.json()
 
-                import logging
-                _log = logging.getLogger(__name__)
-                _log.info(
-                    "OpsGenie response keys: %s, "
-                    "values count: %s, "
-                    "next field: %s",
-                    list(data.keys()) if isinstance(data, dict) else "list",
-                    len(data.get("values", data) if isinstance(data, dict) else data),
-                    data.get("next") if isinstance(data, dict) else "N/A"
-                )
-
                 page_alerts = data.get("values", [])
                 all_alerts.extend(page_alerts)
 
-                next_cursor = data.get("next")
-                if not next_cursor:
+                links = data.get("links", {})
+                next_url = links.get("next") if isinstance(links, dict) else None
+                if not next_url:
                     break
-                cursor = next_cursor
+                # Extract cursor from next_url query string
+                from urllib.parse import urlparse, parse_qs
+                parsed = urlparse(next_url)
+                qs = parse_qs(parsed.query)
+                cursor_list = qs.get("cursor", [])
+                if not cursor_list:
+                    break
+                cursor = cursor_list[0]
 
         return [self._map(a) for a in all_alerts]
 
