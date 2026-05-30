@@ -34,10 +34,24 @@ class OpsgenieAPISource(AlertSource):
         self._email = email
         self._api_token = api_token
 
-    async def load_alerts(self) -> list[dict]:
+    async def load_alerts(
+        self,
+        sync_window_days: int = 7,
+        created_after: str | None = None,
+    ) -> list[dict]:
         import httpx
+        from datetime import timedelta, timezone
 
-        url = f"https://api.atlassian.com/jsm/ops/api/{self._cloud_id}/v1/alerts?limit=100"
+        if created_after is not None:
+            start = datetime.fromisoformat(created_after)
+        else:
+            start = datetime.now(timezone.utc) - timedelta(days=sync_window_days)
+
+        created_after_iso = start.isoformat()
+
+        all_alerts: list[dict] = []
+        cursor: str | None = None
+        base_url = f"https://api.atlassian.com/jsm/ops/api/{self._cloud_id}/v1/alerts"
         credentials = base64.b64encode(f"{self._email}:{self._api_token}".encode()).decode()
         headers = {
             "Authorization": f"Basic {credentials}",
@@ -45,12 +59,24 @@ class OpsgenieAPISource(AlertSource):
         }
 
         async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.get(url, headers=headers)
-            resp.raise_for_status()
-            data = resp.json()
+            while True:
+                params: dict = {"limit": 50, "createdAfter": created_after_iso}
+                if cursor is not None:
+                    params["cursor"] = cursor
 
-        raw_alerts = data.get("values", data) if isinstance(data, dict) else data
-        return [self._map(a) for a in raw_alerts]
+                resp = await client.get(base_url, headers=headers, params=params)
+                resp.raise_for_status()
+                data = resp.json()
+
+                page_alerts = data.get("values", [])
+                all_alerts.extend(page_alerts)
+
+                next_cursor = data.get("next")
+                if not next_cursor:
+                    break
+                cursor = next_cursor
+
+        return [self._map(a) for a in all_alerts]
 
     def _map(self, a: dict) -> dict:
         created_at = a.get("createdAt", "")

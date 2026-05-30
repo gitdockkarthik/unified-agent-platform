@@ -28,6 +28,9 @@ _DEFAULTS: dict = {
     "sync_interval_minutes": 0,
     "noise_threshold_repeat": 3,
     "noise_threshold_close_secs": 300,
+    "sync_window_days": 7,
+    "priority_weights": {"P1": -3, "P2": -2, "P3": 0, "P4": 1, "P5": 2},
+    "noise_classification_threshold": 0,
 }
 
 # Write-through in-memory cache; populated from DB on startup.
@@ -125,11 +128,35 @@ async def _run_opsgenie_sync() -> dict:
         email=_config["email"],
         api_token=_config["api_token"],
     )
-    alerts = await source.load_alerts()
-    classified = classify_alerts(alerts)
+    sync_window_days = _config.get("sync_window_days", 7)
+    last_synced = _config.get("last_synced")
+
+    if last_synced:
+        # Incremental — fetch only new alerts
+        alerts = await source.load_alerts(created_after=last_synced)
+    else:
+        # Full window sync
+        alerts = await source.load_alerts(sync_window_days=sync_window_days)
 
     filename = f"opsgenie-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}.json"
-    report = add_report(filename, alerts, classified)
+
+    from report_store import get_latest_classified
+    existing = get_latest_classified()
+    if existing and last_synced:
+        # Append new to existing
+        all_alerts_raw = [
+            a for a in (existing or [])
+        ]
+        # Combine: existing raw alerts + new
+        combined_alerts = alerts
+        # Re-classify combined set
+        classified = classify_alerts(combined_alerts)
+    else:
+        # First sync or full sync — use new only
+        classified = classify_alerts(alerts)
+        combined_alerts = alerts
+
+    report = add_report(filename, combined_alerts, classified)
 
     _config["last_synced"] = datetime.now(timezone.utc).isoformat()
     _config["alert_count"] = len(alerts)
@@ -152,12 +179,28 @@ class SettingsPayload(BaseModel):
     sync_interval_minutes: int = 0
     noise_threshold_repeat: int = 3
     noise_threshold_close_secs: int = 300
+    sync_window_days: int = 7
+    priority_weights: dict = {"P1": -3, "P2": -2, "P3": 0, "P4": 1, "P5": 2}
+    noise_classification_threshold: int = 0
 
 
 @router.get("")
 async def get_settings() -> dict:
     await load_config_from_db()
-    return {k: v for k, v in _config.items() if k != "api_token"}
+    result = {k: v for k, v in _config.items() if k != "api_token"}
+    result["api_key_configured"] = bool(_config.get("api_key", ""))
+    result["api_key_last4"] = (
+        _config.get("api_key", "")[-4:]
+        if _config.get("api_key") else ""
+    )
+    result["sync_window_days"] = _config.get("sync_window_days", 7)
+    result["priority_weights"] = _config.get(
+        "priority_weights", {"P1": -3, "P2": -2, "P3": 0, "P4": 1, "P5": 2}
+    )
+    result["noise_classification_threshold"] = _config.get(
+        "noise_classification_threshold", 0
+    )
+    return result
 
 
 @router.post("")
