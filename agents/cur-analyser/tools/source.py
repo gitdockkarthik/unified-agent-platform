@@ -28,3 +28,12 @@ class S3Source(CurSource):
 
     async def load_csv(self) -> str:
         raise NotImplementedError("S3 direct connectivity is not yet implemented (Phase 2).")
+
+
+class SyntheticSource(CurSource):
+    """Generates realistic synthetic AWS CUR data for testing and demos."""
+
+    async def load_csv(self) -> str:
+        # generate_sample_csv is defined in tools/sample_generator.py
+        from tools.sample_generator import generate_sample_csv
+        return await generate_sample_csv()

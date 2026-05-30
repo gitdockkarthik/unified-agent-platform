@@ -9,6 +9,7 @@ from typing import Any
 
 import httpx
 from fastapi import FastAPI, Header
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from agent import AgentRunner
@@ -179,6 +180,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.agent_name, version="0.1.0", lifespan=lifespan)
+app.mount("/ui", StaticFiles(directory=Path(__file__).parent / "static", html=True), name="ui")
 app.include_router(dashboard_router)
 app.include_router(reports_router)
 app.include_router(settings_router)

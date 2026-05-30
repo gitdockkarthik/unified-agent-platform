@@ -15,7 +15,18 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
-_DEFAULTS: dict = {"source_type": "file"}
+_DEFAULTS: dict = {
+    "source_type": "file",
+    "last_synced": None,
+    "record_count": None,
+    "total_cost": None,
+    "sync_interval_minutes": 0,
+    "cost_window": "30",
+    "display_currency": "USD",
+    "anomaly_threshold_pct": 20,
+    "top_drivers_count": 5,
+    "min_cost_threshold": 1.00,
+}
 
 # Write-through in-memory cache; populated from DB on startup.
 _config: dict = dict(_DEFAULTS)
@@ -95,16 +106,31 @@ async def load_config_from_db() -> dict:
 
 class SettingsPayload(BaseModel):
     source_type: str = "file"
+    sync_interval_minutes: int = 0
+    cost_window: str = "30"
+    display_currency: str = "USD"
+    anomaly_threshold_pct: int = 20
+    top_drivers_count: int = 5
+    min_cost_threshold: float = 1.00
+    api_key: str = ""
 
 
 @router.get("")
 async def get_settings() -> dict:
     await load_config_from_db()
-    return dict(_config)
+    cfg = dict(_config)
+    api_key = cfg.get("api_key", "")
+    cfg["api_key_configured"] = bool(api_key)
+    cfg["api_key_last4"] = (api_key[-4:] if api_key else "")
+    if "api_key" in cfg:
+        del cfg["api_key"]
+    return cfg
 
 
 @router.post("")
 async def save_settings(payload: SettingsPayload) -> dict:
-    _config["source_type"] = payload.source_type
-    await _upsert("source_type", payload.source_type)
+    data = payload.model_dump()
+    _config.update(data)
+    for k, v in data.items():
+        await _upsert(k, v)
     return {"ok": True}
