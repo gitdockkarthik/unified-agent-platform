@@ -1,0 +1,235 @@
+import asyncio
+import json
+import logging
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any
+
+import httpx
+from fastapi import FastAPI, Header
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from agent import AgentRunner
+from config import settings
+from routes_dashboard import router as dashboard_router
+from routes_reports import router as reports_router
+from routes_settings import load_config_from_db, router as settings_router
+from tools.kafka_tools import (
+    AnomalyTool,
+    BrokerMetricsTool,
+    ClusterOverviewTool,
+    ConsumerLagTool,
+    TopicMetricsTool,
+)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+# ── Agent setup ───────────────────────────────────────────────────────────────
+_runner = AgentRunner(
+    tools=[
+        ClusterOverviewTool(),
+        ConsumerLagTool(),
+        BrokerMetricsTool(),
+        TopicMetricsTool(),
+        AnomalyTool(),
+    ]
+)
+
+# ── Schemas ───────────────────────────────────────────────────────────────────
+
+
+class InvokeRequest(BaseModel):
+    session_id: str
+    user_message: str
+    context: dict[str, Any] = Field(default_factory=dict)
+    history: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class InvokeResponse(BaseModel):
+    session_id: str
+    response: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+# ── Self-registration ─────────────────────────────────────────────────────────
+
+
+async def _register_self() -> None:
+    if not settings.registry_url:
+        logger.info("Self-registration skipped: REGISTRY_URL not set")
+        return
+
+    manifest = json.loads((Path(__file__).parent / "manifest.json").read_text())
+    base = settings.registry_url.rstrip("/")
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        api_key = ""
+        try:
+            token_resp = await client.get(f"{base}/api/platform/agent-token")
+            token_resp.raise_for_status()
+            api_key = token_resp.json().get("registration_token", "")
+        except Exception as exc:
+            logger.warning("Self-registration: could not fetch agent-token: %s", exc)
+
+        if not api_key:
+            api_key = settings.backend_api_key  # legacy env-var fallback
+
+        if not api_key:
+            logger.error("Self-registration skipped: no registration token available")
+            return
+
+        headers = {"X-API-Key": api_key}
+        reg_resp = await client.post(
+            f"{base}/api/registry/agents",
+            json={
+                "name": manifest["name"],
+                "slug": manifest["slug"],
+                "description": manifest.get("description", ""),
+                "version": manifest.get("version", "0.1.0"),
+                "invoke_url": manifest.get("invoke_url"),
+                "tools": manifest.get("tools", []),
+            },
+            headers=headers,
+        )
+
+        if reg_resp.status_code == 201:
+            agent_id = reg_resp.json()["id"]
+            logger.info("Self-registration: registered as %s", agent_id)
+        elif reg_resp.status_code == 409:
+            list_resp = await client.get(f"{base}/api/registry/agents", headers=headers)
+            list_resp.raise_for_status()
+            match = next((a for a in list_resp.json() if a["slug"] == manifest["slug"]), None)
+            if not match:
+                logger.error("Self-registration: 409 conflict but slug not found in agent list")
+                return
+            agent_id = match["id"]
+            logger.info("Self-registration: already registered as %s", agent_id)
+        else:
+            logger.error("Self-registration failed: %s — %s", reg_resp.status_code, reg_resp.text)
+            return
+
+        pub_resp = await client.post(
+            f"{base}/api/registry/agents/{agent_id}/publish", headers=headers
+        )
+        if pub_resp.status_code == 200:
+            logger.info("Self-registration: published successfully")
+        else:
+            logger.error(
+                "Self-registration publish failed: %s — %s",
+                pub_resp.status_code, pub_resp.text,
+            )
+
+
+# ── App init ──────────────────────────────────────────────────────────────────
+
+
+async def _init_config() -> None:
+    from database import engine
+    from models import Base
+
+    if engine is not None:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("_init_config: DB tables ensured")
+
+    db_cfg = await load_config_from_db()
+    if not db_cfg:
+        logger.info("_init_config: no saved config found — waiting for user setup")
+    else:
+        logger.info(
+            "_init_config: config loaded from DB — source_type: %s",
+            db_cfg.get("source_type", "synthetic"),
+        )
+
+
+async def _collection_loop() -> None:
+    """Background collection loop — placeholder for Phase 2 live collection."""
+    logger.info("Collection loop started (Phase 1: manual sync via /settings/sync)")
+    while True:
+        await asyncio.sleep(3600)
+        logger.debug("Collection loop: no live source configured — skipping tick")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await _register_self()
+    except Exception:
+        logger.exception("Self-registration raised an unexpected exception (agent will still start)")
+    try:
+        await _init_config()
+    except Exception:
+        logger.exception("Config initialisation raised an unexpected exception (agent will still start)")
+
+    collection_task = asyncio.create_task(_collection_loop())
+
+    yield
+
+    collection_task.cancel()
+    try:
+        await collection_task
+    except asyncio.CancelledError:
+        pass
+
+
+# ── App ───────────────────────────────────────────────────────────────────────
+
+app = FastAPI(title=settings.agent_name, version="0.1.0", lifespan=lifespan)
+app.mount("/ui", StaticFiles(directory=Path(__file__).parent / "static", html=True), name="ui")
+app.include_router(dashboard_router)
+app.include_router(reports_router)
+app.include_router(settings_router)
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok", "agent": settings.agent_slug}
+
+
+@app.post("/invoke", response_model=InvokeResponse)
+async def invoke(
+    body: InvokeRequest,
+    x_anthropic_key: str | None = Header(default=None),
+) -> InvokeResponse:
+    import kafka_store as ks
+
+    data = ks.get_cluster_data()
+    has_data = data is not None
+
+    response_text, tokens = await _runner.run(
+        user_message=body.user_message,
+        context={
+            "session_id": body.session_id,
+            "has_data": has_data,
+            "broker_count": len(data["brokers"]) if data else 0,
+            "consumer_group_count": len(data["consumer_groups"]) if data else 0,
+            "topic_count": len(data["topics"]) if data else 0,
+        },
+        history=body.history,
+        api_key=x_anthropic_key,
+    )
+
+    chart_data = None
+    if "```chart" in response_text:
+        try:
+            start = response_text.index("```chart") + 8
+            end = response_text.index("```", start)
+            chart_data = json.loads(response_text[start:end].strip())
+            response_text = response_text[: response_text.index("```chart")].strip()
+        except Exception:
+            pass
+
+    metadata: dict[str, Any] = {"tokens_used": tokens}
+    if chart_data is not None:
+        metadata["chart"] = chart_data
+
+    return InvokeResponse(
+        session_id=body.session_id,
+        response=response_text,
+        metadata=metadata,
+    )
