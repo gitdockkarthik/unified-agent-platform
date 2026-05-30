@@ -68,6 +68,17 @@ class OpsgenieAPISource(AlertSource):
                 resp.raise_for_status()
                 data = resp.json()
 
+                import logging
+                _log = logging.getLogger(__name__)
+                _log.info(
+                    "OpsGenie response keys: %s, "
+                    "values count: %s, "
+                    "next field: %s",
+                    list(data.keys()) if isinstance(data, dict) else "list",
+                    len(data.get("values", data) if isinstance(data, dict) else data),
+                    data.get("next") if isinstance(data, dict) else "N/A"
+                )
+
                 page_alerts = data.get("values", [])
                 all_alerts.extend(page_alerts)
 
